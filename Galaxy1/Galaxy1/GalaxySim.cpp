@@ -8,9 +8,9 @@
 
 using namespace opencl;
 
-#define GRAVITY_PROGRAM	"Data/CL/gravity.cl"
+#define GRAVITY_PROGRAM	"../Data/CL/gravity.cl"
 #define GRAVITY_KERNEL	"gravity"
-#define MOVE_PROGRAM	"Data/CL/move.cl"
+#define MOVE_PROGRAM	"../Data/CL/move.cl"
 #define MOVE_KERNEL		"move"
 
 #define IMAGE_WIDTH		1024

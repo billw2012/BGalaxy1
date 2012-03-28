@@ -52,7 +52,7 @@ Galaxy1::Galaxy1(QWidget *parent, Qt::WFlags flags)
 		return ;
 	}
 
-	sim.init_writing("Data/Results/output.avi");
+	sim.init_writing("../Data/Results/output.avi");
 	//sim.initialize_bodies(0.1 * SOLAR_MASS_IN_EARTH_MASS, 2 * SOLAR_MASS_IN_EARTH_MASS, -1 * AU_PER_LIGHTYEAR, 1 * AU_PER_LIGHTYEAR);
 	//sim.initialize_universe(0.1 * SOLAR_MASS_IN_EARTH_MASS, 2 * SOLAR_MASS_IN_EARTH_MASS, 10 * AU_PER_LIGHTYEAR, 1);
 	sim.initialize_galaxy(0.1 * SOLAR_MASS_IN_EARTH_MASS, 2 * SOLAR_MASS_IN_EARTH_MASS, 0.2 * AU_PER_LIGHTYEAR);
