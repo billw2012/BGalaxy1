@@ -1,0 +1,154 @@
+   Copyright (C)  2000    Daniel A. Atkinson  <DanAtk@aol.com>
+   Copyright (C)  2004    Ivano Primi  <ivprimi@libero.it>    
+
+   This is the installation manual of the HPA Library.
+
+   Copying and distribution of this file, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.
+
+***************************************************************************
+
+
+INSTRUCTIONS FOR THE INSTALLATION OF THE HPA LIBRARY ON A UNIX(R)
+SYSTEM.
+
+Before starting with the installation you must be sure that on the
+system where you are going to install the HPA library the following 
+software is already available:
+
+1 - The `bash' shell (or another shell sh-compatible);
+2 - The `make' utility, preferably the 'GNU' version of 'make' (also
+    called 'gmake');
+3 - Whatever you need to compile an ANSI-C program. The compiler
+    must accept the options -c (for compile only), -D (to define macros),
+    -I (to specify the path where searching for non-standard include files),  
+    -L (to specify the path where searching for non-standard libraries) and
+    -o (to specify the output file). It is better if it supports
+    the options -g (for debug) and -O (to produce optimized object
+    code), too. I built and tested the library with the GNU C Compiler 
+    (gcc) (I worked with the versions 2.95.3 on SunOS 5.8, 
+    2.95.4 on FreeBSD 4.9, 3.3.3 on NetBSD 2.0.2, 3.3.4 
+    on Slackware GNU/Linux 10.1, and 4.4.4 on Slackware GNU/Linux 13.1).
+    If you are interested in gcc you may get it at the address
+
+		gcc.gnu.org		.
+
+4.  If you want to build and install also the C++ wrapper for
+    the HPA library, then you need also an ANSI-compliant
+    C++ compiler. When I say ANSI-compliant, I refer to a
+    recent ANSI protocol (>= 1997). I successfully compiled
+    and tested the C++ wrapper using the GNU C++ compiler
+    (g++), version 3.3.4, under Slackware GNU/Linux 10.1,
+    and version 4.4.4 under Slackware GNU/Linux 13.1.
+    I presume that any version of g++ >= 2.95.x should work fine.
+
+TO BUILD THE LIBRARY HPA (WHOSE FINAL NAME WILL
+BE `libhpa.a': THE SUPPLIED MAKEFILE ONLY CREATES A STATIC
+VERSION OF THE LIBRARY) YOU HAVE TO OPEN A SHELL AND ENTER IN THE DIRECTORY
+CONTAINING THE SOURCE OF THE LIBRARY (AND THIS FILE TOO). AFTER
+EVENTUALLY MODIFYING THE SUPPLIED MAKEFILE, YOU HAVE TO
+LAUNCH THE COMMAND
+
+	make install
+
+WHICH WILL BUILD AND INSTALL THE LIBRARY IN '/usr/local/lib', THE NECESSARY
+HEADER FILES IN '/usr/local/include' AND THE DOCUMENTATION IN
+'/usr/local/doc/hpalib'.
+
+REMARKS: 
+
+	1) If you are going to use GNU make (gmake) to build and 
+	   install the library, which is probably the case 
+	   if you are working on GNU/Linux, 
+	   then you have to read and modify 'GNUmakefile' in place of
+           'makefile'. The 'GNUmakefile' is in the same directory of
+           the 'makefile' and of this 'INSTALL' file.
+
+	2) The (GNU)makefile contains the definition of the macro
+	   MANTSIZE_MACRO, which is very important to establish 
+           the precision which the functions of the HPA library 
+	   will perform their computations with. In fact, this
+           macro defines the size of a variable of type 'xpr', 
+           which is the numeric type defined and used by the HPA
+	   library to store real values. 
+	   A bigger size means higher precision but, at the same time,
+	   bigger consumption of memory and more work for the CPU. 
+	   Therefore, you should not exceed
+	   with this size if your machine is not really powerful. 
+
+You may change the root directory of the installation by changing
+the value of the variable PREFIX in the (GNU)makefile:
+'make install' will put the library file 'libhpa.a' in "$PREFIX/lib",
+the header files in "$PREFIX/include" and the documentation
+in "$PREFIX/doc/hpalib".
+If one or more of these subdirectories do not exist the installation procedure
+will try to create them.
+You may also change the values of the variables LIBDIR, INCLUDEDIR or/and
+DOCDIR to control in a better way where the installation procedure is going
+to copy the single files. 
+Of course, all these modifications must be done before
+launching the command 'make install'.
+Be careful: if you want to install the library inside a system-directory
+then you will have to launch the 'make install' command as root.
+
+If you are a programmer and you want to contribute to the debug of the
+HPA library, then you can be interested in producing
+debugging information for the code you are about to compile;
+you can do this by defining the variable DEBUG_MACRO (see makefile
+or GNUmakefile) as "-g" (or -g2, -g3, -ggdb if you are using the gcc compiler).
+
+If you want to produce optimized code and gcc is your compiler ,
+then you can do it by defining the variable OPT_MACRO as "-O", "-O2" or
+"-O3". I always used the -O3 optimization level with gcc 3.x.x,
+but, because of a bug, with many releases of gcc 4 
+only -O and -O1 work fine. Using higher optimization levels with
+gcc 4 usually ends up in the production of a bugged library.
+
+If gcc is your compiler then you can enable debug
+and optimization at the same time (if you wish so).
+
+IF YOU ARE INTERESTED IN HAVING ALSO THE C++ WRAPPER AND
+YOU PRESUME THAT YOUR C++ COMPILER IS RECENT ENOUGH, then
+you can use
+
+        make cxx_install
+
+in place of the simple
+
+        make install
+
+All previous annotations, remarks and warnings remain valid.  
+
+After the installation, give the command:
+
+'make clean'		to remove the object-files from the source directory
+			of the library,
+
+'make clobber'          to remove the object-files and the library-files
+                        (these ones have a name ending by .a).
+			
+Finally, the command
+
+'make uninstall'
+
+may be used to remove the library, the header files and all other
+files previously installed from their destinations. This
+command will also remove the subdirectory 'hpalib' from 'PREFIX/doc'.
+
+To have more information on how to use the HPA library, read the documentation
+contained in the ./doc directory. 
+This documentation, which is available in several formats 
+(PDF, HTML and plain ASCII text), is also installed inside 'PREFIX/doc/hpalib'.
+
+I do not supply any Makefile for Microsoft Windows(R) or MacOS X(R),
+since I only work on GNU/Linux(R), NetBSD(R) and SunOS(R).
+
+P.S.: I have successfully built and tested the HPA library on the following
+      systems:
+
+- Slackware GNU/Linux 13.1, kernel 2.6.33.4, gcc 4.4.4 (64 bit)
+- Slackware GNU/Linux 10.1, kernel 2.4.29, gcc 3.3.4
+- FreeBSD 4.9, gcc 2.95.4
+- NetBSD 2.0.2, gcc 3.3.3
+- SunOS 5.8, ultrasparc, gcc 2.95.3

@@ -1,0 +1,92 @@
+   Copyright (C)  2000    Daniel A. Atkinson  <DanAtk@aol.com>
+   Copyright (C)  2004    Ivano Primi  <ivprimi@libero.it>    
+
+   Copying and distribution of this file, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.
+
+******************************************************************************
+
+                        TESTING HPALIB
+
+ Two shell script files, run_all_tests  and  runtest  are supplied to 
+ facilitate comparison of test program output with the sample output 
+ appended as a comment to each test source file. 
+ These scripts must be left in the 'test' subdirectory
+ of the distribution source of the HPA library. 
+ You should check the first line of each script and modify it if
+ the location assumed, namely /bin/sh, is not correct.
+ You may also have to change the definition of the CC variable
+ if the name of your C compiler is not 'cc', or 'cc' does not work 
+ properly and you can use 'gcc' as alternative.
+ 
+ To run all tests at once you have simply to execute run_all_tests in
+ the 'test' subdirectory of the distribution source of the HPA library: 
+
+       $  ./run_all_tests
+
+ (here $ is the prompt of the shell :))
+
+ The standard command line parameters for each test are tabulated in the
+ README file of the test/ subdirectory. This tabulation also specifies
+ the sequence of prompt responses (if any) required to generate the
+ standard test output. 
+ 
+ The output resulting from the execution of each test program is 
+ compared, using 'diff', to the standard output appended as a comment to the
+ source file of the test program.
+
+ If all tests succeed, then the output of run_all_tests should be
+
+ :::::::::: t2xtrig.c  ::::::::::
+
+ :::::::::: tatox.c    ::::::::::
+
+ :::::::::: tbxprint.c ::::::::::
+
+ :::::::::: tcform.c   ::::::::::
+
+ :::::::::: tcxabs.c   ::::::::::
+
+ :::::::::: tcxbasic.c ::::::::::
+
+ :::::::::: tcxbin.c   ::::::::::
+
+ ... (continue)
+
+ Any differences in numerical values that appear may indicate a failed test.
+ Note that if the version of HPA installed on your system has been built by
+ setting XDIM to a value greater than 7, then you will surely obtain a long
+ list of numerical differences. This will occur since the sample output 
+ appended as a comment to each test source file has been obtained for XDIM
+ equal to 7. You can find out what value XDIM has for the 
+ version of HPA installed on your system by simply inspecting the file 
+ 'hpaconf.h' inside the directory PREFIX/include, where PREFIX is the 
+ directory chosen for the installation of the HPA library. 
+ If you do not know or remember which directory has been chosen to install 
+ HPA, you can recover the path of the file 'hpaconf.h' by using the command 
+ "hpaconf -c -n". For instance, on my system I obtain
+
+	ivano@firebird[~]$ hpaconf -c -n
+	-I/usr/local/include 
+
+ which indicates that the complete path of the file 'hpaconf.h' is
+ '/usr/local/include/hpaconf.h'.
+ Another way to recover the value of XDIM consists in using the plain command
+ "hpaconf" (with no options). When called without any option, "hpaconf"
+ displays on the terminal a long message, which includes a line telling
+ something about the 'Size of an extended precision floating point value'.
+ To obtain the actual value of XDIM, you have to divide by 2 the value
+ shown at the end of this line and subtract 1 from the result of this
+ division. For instance, if you read
+
+ $ hpaconf 
+ ... (Omitted lines) ...
+ Size of an extended precision floating point value (in bytes): 16
+ ... (Omitted lines) ...
+
+ then the value of XDIM is 16 / 2 - 1 = 8 - 1 = 7.
+
+ Finally, note that some compilers generate slightly different formats for
+ scientific (%e) notation. Therefore, differences in such numbers, flagged by 'diff',
+ should be inspected to see if the numerical values are actually different.

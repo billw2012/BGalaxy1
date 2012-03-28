@@ -1,0 +1,23 @@
+#! /bin/sh
+
+#   Copyright (C)  2000    Daniel A. Atkinson  <DanAtk@aol.com>
+#   Copyright (C)  2004    Ivano Primi  <ivprimi@libero.it>    
+
+#   Copying and distribution of this file, with or without modification,
+#   are permitted in any medium without royalty provided the copyright
+#   notice and this notice are preserved.
+
+# script to compare test code output with the sample
+# output appended as a comment to the test source code
+# parameters: $1 = name of test source
+#             $2 to $n = command line parameters for test (if any)
+
+CC=cc
+#DIFF="numdiff -a 1.0e-32 -r 1.0e-32"
+DIFF=diff
+f=$1; shift
+$CC $f `hpaconf -c -l`           # compile test program
+./testex "Test output" $f >tt0   # extract sample output -> tt0
+./body -1 +2 tt0 > tt2           # Remove the last line and the first 2 ones
+./a.out $* >tt1                  # run test with output -> tt1
+$DIFF tt2 tt1                    # compare output to sample output

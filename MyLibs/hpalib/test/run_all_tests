@@ -1,0 +1,145 @@
+#! /bin/sh
+
+#   Copyright (C)  2000    Daniel A. Atkinson  <DanAtk@aol.com>
+#   Copyright (C)  2004    Ivano Primi  <ivprimi@libero.it>    
+
+#   Copying and distribution of this file, with or without modification,
+#   are permitted in any medium without royalty provided the copyright
+#   notice and this notice are preserved.
+
+CC=cc
+$CC body.c -o body
+$CC testex.c -o testex
+$CC arch.c -o arch
+
+echo -e "\n:::::::::: t2xtrig.c  ::::::::::"
+./runtest t2xtrig.c   data/xtrig.dat
+
+echo -e "\n:::::::::: tatox.c    ::::::::::"
+./runtest tatox.c     data/atox.dat
+
+echo -e "\n:::::::::: tbxprint.c ::::::::::"
+./runtest tbxprint.c  data/bxprint.dat
+
+echo -e "\n:::::::::: tcform.c   ::::::::::"
+./runtest tcform.c
+
+echo -e "\n:::::::::: tcxabs.c   ::::::::::"
+./runtest tcxabs.c    data/cxgen.dat
+
+echo -e "\n:::::::::: tcxbasic.c ::::::::::"
+./runtest tcxbasic.c
+
+echo -e "\n:::::::::: tcxbin.c   ::::::::::"
+./runtest tcxbin.c    data/cxbin.dat
+
+echo -e "\n:::::::::: tcxcmp.c   ::::::::::"
+./runtest tcxcmp.c    data/cxcmp.dat
+
+echo -e "\n:::::::::: tcxfunc1.c ::::::::::"
+./runtest tcxfunc1.c  data/cxgen.dat
+
+echo -e "\n:::::::::: tcxfunc2.c ::::::::::"
+./runtest tcxfunc2.c  data/cxgen.dat
+
+echo -e "\n:::::::::: tcxfunc3.c ::::::::::"
+./runtest tcxfunc3.c  data/cxgen.dat
+
+echo -e "\n:::::::::: tcxout.c   ::::::::::"
+./runtest tcxout.c    data/cxout.dat
+
+echo -e "\n:::::::::: tcxpwr.c   ::::::::::"
+./runtest tcxpwr.c    data/cxpwr.dat
+
+echo -e "\n:::::::::: tinttox.c  ::::::::::"
+./arch
+if [ $? -eq 1 ]
+then 
+    ./runtest tinttox64.c   data/inttox64.dat
+else
+    ./runtest tinttox32.c   data/inttox32.dat
+fi
+
+echo -e "\n:::::::::: tprcxpr.c  ::::::::::"
+./runtest tprcxpr.c   data/prcxpr.dat
+
+echo -e "\n:::::::::: tprxpr.c   ::::::::::"
+./runtest tprxpr.c    data/prxpr.dat
+
+echo -e "\n:::::::::: tspecv.c   ::::::::::"
+./runtest tspecv.c
+
+echo -e "\n:::::::::: tstr2cx.c  ::::::::::"
+./runtest tstr2cx.c   data/str2cx.dat
+
+echo -e "\n:::::::::: tstr2x.c   ::::::::::"
+./runtest tstr2x.c    data/str2x.dat
+
+echo -e "\n:::::::::: txaop1.c   ::::::::::"
+./runtest txaop1.c    data/aop1.dat
+
+echo -e "\n:::::::::: txaop2.c   ::::::::::"
+./runtest txaop2.c    -1.24e-3
+
+echo -e "\n:::::::::: txchser.c  ::::::::::"
+./runtest txchser.c   12
+
+echo -e "\n:::::::::: txconv.c   ::::::::::"
+./runtest txconv.c    data/xcvt.dat
+
+echo -e "\n:::::::::: txdiv.c    ::::::::::"
+echo "1 3 4 7 2 16 0 0" | ./runtest txdiv.c 2> /dev/null
+
+echo -e "\n:::::::::: txexp.c    ::::::::::"
+./runtest txexp.c
+
+echo -e "\n:::::::::: txfix.c    ::::::::::"
+./runtest txfix.c     data/xfix.dat
+
+echo -e "\n:::::::::: txflt.c    ::::::::::"
+./runtest txflt.c
+
+echo -e "\n:::::::::: txfmod.c   ::::::::::"
+./runtest txfmod.c 12.5 3
+
+echo -e "\n:::::::::: txfrac.c   ::::::::::"
+./runtest txfrac.c data/xfrac.dat
+
+echo -e "\n:::::::::: txfrex.c   ::::::::::"
+./runtest txfrex.c data/xfrex.dat
+
+echo -e "\n:::::::::: txhypb.c   ::::::::::"
+./runtest txhypb.c
+
+echo -e "\n:::::::::: txivhypb.c ::::::::::"
+./runtest txivhypb.c
+
+echo -e "\n:::::::::: txivtrg.c  ::::::::::"
+./runtest txivtrg.c
+
+echo -e "\n:::::::::: txlog.c    ::::::::::"
+./runtest txlog.c
+
+echo -e "\n:::::::::: txout.c    ::::::::::"
+./runtest txout.c     data/xout.dat
+
+echo -e "\n:::::::::: txprcmp.c  ::::::::::"
+./runtest txprcmp.c   data/xcmp.dat
+
+echo -e "\n:::::::::: txpwr.c    ::::::::::"
+./runtest txpwr.c     -.7 6
+
+echo -e "\n:::::::::: txround.c  ::::::::::"
+./runtest txround.c   data/xround.dat
+
+echo -e "\n:::::::::: txscf.c   ::::::::::"
+./runtest txscf.c
+
+echo -e "\n:::::::::: txsqrt.c   ::::::::::"
+./runtest txsqrt.c
+
+echo -e "\n:::::::::: txtrig.c   ::::::::::"
+./runtest txtrig.c
+
+rm ./a.out ./arch ./body ./testex ./tt0 ./tt1 ./tt2
+

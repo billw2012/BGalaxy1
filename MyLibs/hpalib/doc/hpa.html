@@ -1,0 +1,5324 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+<META NAME="generator" CONTENT="http://txt2tags.sf.net">
+<TITLE>HIGH PRECISION ARITHMETIC LIBRARY PROGRAMMER'S MANUAL</TITLE>
+</HEAD><BODY BGCOLOR="white" TEXT="black">
+<P ALIGN="center"><CENTER><H1>HIGH PRECISION ARITHMETIC LIBRARY PROGRAMMER'S MANUAL</H1>
+<FONT SIZE="4">
+<I>Copyright (C) 2005 - 2010 Ivano Primi &lt;ivprimi (a) libero (dot) it&gt; </I><BR>
+Last Update: 2010-07-21
+</FONT></CENTER>
+
+<P></P>
+<HR NOSHADE SIZE=1>
+<P></P>
+  <OL>
+  <LI><A HREF="#toc1">Summary</A>
+  <LI><A HREF="#toc2">License</A>
+  <LI><A HREF="#toc3">General Technical Comments</A>
+  <LI><A HREF="#toc4">General overview</A>
+  <LI><A HREF="#runtime_errors">Dealing with runtime errors</A>
+  <LI><A HREF="#comp_link">Compiling and linking</A>
+  <LI><A HREF="#real_arith">Real arithmetic</A>
+    <UL>
+    <LI><A HREF="#toc8">7.1. Real constants</A>
+    <LI><A HREF="#toc9">7.2. Extended Precision Floating Point Arithmetic</A>
+    <LI><A HREF="#toc10">7.3. Extended Precision Math Library</A>
+    <LI><A HREF="#toc11">7.4. Applications of Extended Precision Arithmetic</A>
+    </UL>
+  <LI><A HREF="#toc12">Complex Arithmetic</A>
+    <UL>
+    <LI><A HREF="#toc13">8.1. Complex constants</A>
+    <LI><A HREF="#toc14">8.2. Extended Precision Complex Arithmetic</A>
+    <LI><A HREF="#toc15">8.3. Extended Precision Complex Math Library</A>
+    </UL>
+  <LI><A HREF="#toc16">The C++ interface</A>
+  <LI><A HREF="#toc17">Compiling and linking with the C++ wrapper</A>
+  <LI><A HREF="#xreal_class">The xreal class</A>
+  <LI><A HREF="#xcomplex_class">The xcomplex class</A>
+  <LI><A HREF="#toc20">Acknowledgments</A>
+  <LI><A HREF="#GNUFDL">GNU Free Documentation License</A>
+  </OL>
+
+<P></P>
+<HR NOSHADE SIZE=1>
+<P></P>
+<P>
+Permission  is granted to copy, distribute and/or modify this document under 
+the terms of the GNU Free Documentation  License,  Version 1.3 or any later 
+version published by the   Free   Software  Foundation;  with  no 
+Invariant  Sections,  no Front-Cover  Texts,  and no Back-Cover Texts. 
+A copy of the license is included in the
+<A HREF="#GNUFDL">section "GNU Free Documentation License"</A>.
+</P>
+<A NAME="toc1"></A>
+<H1>1. Summary</H1>
+<P>
+The High Precision Arithmetic (HPA) library implements a high
+precision floating point arithmetic together with a
+comprehensive set of support functions. The general
+areas covered by these functions include:
+</P>
+<UL>
+<LI>Extended Precision Arithmetic,
+<LI>Extended Precision Math Library,
+<LI>Applications of High Precision Computation.
+</UL>
+
+<P>
+The math library support includes evaluation of
+trigonometric, inverse trigonometric, hyperbolic,
+logarithm, and exponential functions at the same
+precision as the floating point math itself.
+The HPA library also supports high precision complex 
+arithmetic and includes an Extended Precision 
+Complex Math Library.
+</P>
+<A NAME="toc2"></A>
+<H1>2. License</H1>
+<P>
+The HPA library has been derived 
+from a branch of the source code of the CCMath library,
+which is a work by Daniel A. Atkinson. 
+Since Daniel A. Atkinson released the code of the CCMath Library 
+under GNU Lesser General Public License, it has been possible
+for Ivano Primi to modify, complete and redistribute this source code 
+under the same terms.
+</P>
+<P>
+The HPA (abbreviation of High Precision Arithmetic) Library is then
+copyrighted by Ivano Primi  &lt;ivprimi (at) libero (dot) it&gt;  and
+Daniel A. Atkinson. As for the CCMath Library, its source code
+is released under the terms of the GNU Lesser General 
+Public License, as published by the Free Software Foundation; 
+either version 2.1 of the License, or (at your option) any later version.
+</P>
+<P>
+The HPA library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+</P>
+<P>
+You should have received a copy of the GNU Lesser General Public License
+along with this library; if not, see  <A HREF="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</A>.
+Write to the email address
+</P>
+	<BLOCKQUOTE>
+	&lt;ivprimi (at) libero (dot) it&gt;                                      .
+	</BLOCKQUOTE>
+<P></P>
+<P>
+if you want to ask for additional information, report bugs or submit patches.
+</P>
+<A NAME="toc3"></A>
+<H1>3. General Technical Comments</H1>
+<P>
+The functions forming the HPA library are all implemented in a portable 
+fashion in the C language.
+The IEEE 754 standard for floating point hardware and software is assumed
+in the PC/Unix version of this library. The normal configuration of the library
+employs a floating point mantissa of 112 bits, which corresponds approximately to a 
+32 decimal digit precision. Higher precision is available as an option.
+An extended floating point number is represented as a combination of the
+following elements:
+</P>
+<UL>
+<LI>sign bit(s): 0 -&gt; positive, 1 -&gt; negative ;
+<LI>exponent(e): 15-bit biased integer (bias=16383) ;
+<LI>mantissa(m): 7 words of 16 bit length with the leading 1 explicitly represented .
+</UL>
+
+<P>
+The range of representable numbers is then given by
+</P>
+<PRE>
+                    2^16384 &gt; x &gt; 2^[-16383]
+</PRE>
+<P>
+or
+</P>
+<PRE>
+               1.19*10^4932 &gt; x &gt; 1.68*10^-[4932].
+</PRE>
+<P>
+Special values of the exponent are:
+</P>
+<UL>
+<LI>all ones -&gt; infinity (floating point overflow)
+<LI>all zeros -&gt; number = zero.
+</UL>
+
+<P>
+Underflow in operations is handled by a flush to zero. Thus, a number with
+the exponent zero and nonzero mantissa is invalid (not-a-number).
+From the point of view of the HPA library, a complex number is simply
+a structure formed by two extended floating point numbers, representing
+respectively the real and the imaginary part of the complex number.
+</P>
+<A NAME="toc4"></A>
+<H1>4. General overview</H1>
+<P>
+The HPA library is composed by <I>two</I> <I>modules</I>. The first one is formed
+by the functions for real arithmetic, i.e. by the functions
+operating on real arguments. The second one is formed by all functions
+which manipulate complex arguments.
+The lists of the functions which compose the HPA library
+are in the header files <CODE>xpre.h</CODE> and <CODE>cxpre.h</CODE>.
+<CODE>xpre.h</CODE> is the header file for real arithmetic, it contains the definition
+of an extended precision real number (<CODE>struct xpr</CODE>),
+and the declarations of the functions provided by the library
+to manipulate real arguments.
+The numeric type <CODE>struct xpr</CODE> can be used to declare and define
+real variables, just as in
+</P>
+<PRE>
+  struct xpr q;
+</PRE>
+<P>
+The size of a variable of type <CODE>struct xpr</CODE> is given by  
+(2 x XDIM + 2) bytes, where  <CODE>XDIM</CODE> is a constant defined in the file 
+<CODE>xpre.h</CODE> (namely, in the file <CODE>hpaconf.h</CODE> which is included by 
+<CODE>xpre.h</CODE>).
+</P>
+<P>
+<CODE>cxpre.h</CODE> is the header file for complex arithmetic, it contains 
+the definition of an extended precision complex number 
+(<CODE>struct cxpr</CODE>), and the declarations of the functions supplied
+by the library to manipulate complex arguments.
+The numeric type <CODE>struct cxpr</CODE> can be used to declare and define
+complex variables, just as in
+</P>
+<PRE>
+  struct cxpr q;
+</PRE>
+<P>
+The size of a variable of type <CODE>struct cxpr</CODE> is given by  
+(4 x XDIM + 4) bytes, where  <CODE>XDIM</CODE> is the same constant as above.
+</P>
+<P>
+Before declaring or defining variables of type <CODE>struct xpr</CODE>
+and before using anyone of the functions declared in the header file
+<CODE>xpre.h</CODE>, you have to insert the line
+</P>
+<PRE>
+  #include &lt;xpre.h&gt;
+</PRE>
+<P>
+in your source code file.
+Similarly, before declaring or defining variables of type <CODE>struct cxpr</CODE>
+and before using anyone of the functions declared in the header file
+<CODE>cxpre.h</CODE>, you have to add the line
+</P>
+<PRE>
+  #include &lt;cxpre.h&gt;
+</PRE>
+<P>
+to your source code file.
+</P>
+<P>
+After including in your source code the header file <CODE>xpre.h</CODE> or, 
+if you also need functions handling complex arguments, the header file 
+<CODE>cxpre.h</CODE>, you can start to use the HPA library
+by defining all variables and calling 
+all functions which are necessary for your computations.
+In fact, the HPA library DOES NOT REQUIRE that a special initialization
+routine must be called before any other function of the library.
+Moreover, variables of  type <CODE>struct xpr</CODE> or <CODE>struct cxpr</CODE>
+DO NOT NEED to be initialized before they can be used.
+</P>
+<P>
+When the HPA library was written, a sort of namespace was created
+for all the identifiers used by the library.
+This has been achieved by sticking to the following rules:
+</P>
+<OL>
+<LI>Identifiers of functions and types are lowercase; the unique
+exception to this rule is the function <CODE>xisNaN()</CODE>. Their names start
+by <CODE>x</CODE>, if they are defined in <CODE>xpre.h</CODE>, or by <CODE>cx</CODE>, if they are defined
+in <CODE>cxpre.h</CODE>, with the only exception of a few functions,
+which have a name ending by <CODE>tox</CODE> or <CODE>tocx</CODE>: 
+<PRE>
+  strtox(), strtocx(), atox(), atocx(),
+</PRE>
+<PRE>
+  dbltox(), dctocx(), flttox(), fctocx(),
+</PRE>
+<PRE>
+  inttox(), ictocx(), uinttox(), uctocx();
+</PRE>
+<LI>The names of the macros defined by the HPA library are all uppercase
+and start by <CODE>X</CODE> or <CODE>CX</CODE>;
+<LI>The names of the global constants defined by the HPA library start
+by <CODE>x</CODE> (real constants) or by <CODE>cx</CODE> (complex constants) and the letter
+which immediately follows this prefix is always uppercase, just as in
+<CODE>xZero</CODE>, <CODE>xPi</CODE>, <CODE>cxOne</CODE>, <CODE>cxIU</CODE> (<CODE>IU</CODE> stays for imaginary
+unit);
+<LI>The unique global variable defined by the HPA library is an
+error indicator of <CODE>int</CODE> type, whose name is <CODE>xErrNo</CODE>.
+</OL>
+
+<P>
+This is a trivial program showing the use of the HPA library:
+</P>
+<PRE>
+  
+  #include &lt;stdio.h&gt;
+  #include &lt;xpre.h&gt;
+  
+  int main (void)
+  {
+    struct xpr s;
+    int i, n;
+  
+    do
+      {
+        printf ("Give me a number, n = ? \t");
+        scanf ("%d", &amp;n);
+        s = xZero;
+        for (i = 0; i &lt;= n; i++)
+          s = xadd (s, xpr2(xOne, i), 0);
+        printf ("The sum 2^0 + 2^1 + ... + 2^n is equal to\n");
+        xprxpr (s, 30);
+        putchar ('\n');
+      } while (n &gt; 0);
+    return 0;
+  }
+  
+</PRE>
+<P>
+This program takes in input from the user an integer value <CODE>n</CODE>
+and prints on the screen the sum of the first <CODE>n</CODE> powers of <CODE>2</CODE>.
+In the program we use the functions <CODE>xpr2()</CODE> and <CODE>xprxpr()</CODE>.
+<CODE>xpr2(x, n)</CODE>, where <CODE>n</CODE> is an integer, returns <CODE>x* 2^n</CODE>, while
+<CODE>xprxpr(x, m)</CODE>, where <CODE>m</CODE> is an integer, prints on the screen
+the number <CODE>x</CODE> with <CODE>m</CODE> decimal digits after the decimal point (.) .
+</P>
+<P>
+The HPA library is <B>NOT</B> thread safe. Some of the HPA internal
+data could get corrupted if multiple HPA functions are active at the
+same time. This is due to the fact that some functions of the HPA library
+use static variables to store information.
+The user should then guarantee that only one thread is performing
+HPA functions. This can usually be achieved by a call to the operating
+system to obtain a <I>semaphore</I>, <I>mutex</I>,  or <I>critical code section</I>;
+the operating system will then guarantee that only one HPA thread will be
+active at a time.
+</P>
+<A NAME="runtime_errors"></A>
+<H1>5. Dealing with runtime errors</H1>
+<P>
+During the use of the HPA library it could happen to pass
+to a function an illegal argument, namely, an argument whose
+value is not compatible with the mathematical definition of the function.
+For example, this occurs when a negative value is passed to
+the function <CODE>xsqrt()</CODE>. This function computes and returns 
+the (real) square root of its argument, but the square root of a number
+is defined only for non-negative numbers.
+So, if <CODE>x</CODE> is less than zero, <CODE>xsqrt(x)</CODE> can not
+be computed and a mathematical error occurs, a so called <I>domain error</I>.
+Another type of mathematical error occurs when the second argument
+of the division function (<CODE>xdiv()</CODE>) is zero: since it is impossible
+to divide a number by zero, a <I>division by zero</I> error occurs.
+What exactly happens when a mathematical error is detected during the
+execution of a function depends on the way the HPA library was compiled
+when it was installed on the system where you are working.
+If, during the installation process, the default setting was left
+unchanged, then, whenever a runtime error occurs within a function of the HPA
+library, this function will set an external error indicator to
+a suitable value. This value can be looked up later
+to know what exactly went wrong.
+The name of the variable of type <CODE>int</CODE> used as error indicator
+is <CODE>xErrNo</CODE>. Before any function of the HPA library is
+executed, the value of <CODE>xErrNo</CODE> is <CODE>0</CODE>.
+If a mathematical error occurs when the first HPA function is called, 
+then <CODE>xErrNo</CODE> is set to a suitable positive value,
+which indicates the exact type of the error.
+After, <CODE>xErrNo</CODE> is modified if and only if, during the execution of
+an HPA function, another mathematical error occurs. <CODE>xErrNo</CODE> is never
+reset to <CODE>0</CODE> by the HPA library; therefore, in order to detect 
+possible errors, one has to
+set <CODE>xErrNo</CODE> to zero before calling any function of the HPA library. 
+An example of error handling is given by:
+</P>
+<PRE>
+  
+  #include &lt;stdio.h&gt;
+  #include &lt;xpre.h&gt;
+  
+  extern int xErrNo;
+  
+  int main (void)
+  {
+    int n;
+    struct xpr sr;
+  
+    do
+      {
+        printf ("Give me a number, n = ? \t");
+        scanf ("%d", &amp;n);
+        xErrNo = 0;
+        sr = xsqrt (inttox (n));
+        if (xErrNo == 0)
+          {
+            printf ("The square root of %d is\n", n);
+            xprxpr (sr, 30);
+            putchar ('\n');
+          }
+        else
+          fprintf (stderr, "*** Error: Out of domain\n");
+      } while (n != 0);
+    return 0;
+  }
+  
+</PRE>
+<P>
+In this program <CODE>xErrNo</CODE> is reset to zero, at each execution of the
+<CODE>do {...} while();</CODE> loop, before the call of the <CODE>xsqrt()</CODE> function.
+</P>
+<P>
+However, the HPA library could be compiled to deal differently with
+runtime errors.
+For example, in case of error a suitable message could be
+printed on <I>stderr</I> and the library could also cause the
+termination of the calling program via <CODE>exit(1)</CODE>.
+Finally, the library could also be compiled to ignore
+any mathematical error (sigh !). To know how the routines of
+the HPA library deal with errors is sufficient to examine the file
+<CODE>hpaconf.h</CODE> (which is automatically included by <CODE>xpre.h</CODE> and
+<CODE>cxpre.h</CODE>). This file defines the macro:
+</P>
+<UL>
+<LI><CODE>XERR_DFL</CODE>   to mean that, in case of error, 
+<CODE>xErrNo</CODE> is suitably set;
+<LI><CODE>XERR_WARN</CODE>  to mean that, in case of error, 
+a suitable message is printed on stderr;
+<LI><CODE>XERR_EXIT</CODE>  to mean that, in case of error, 
+the calling program is terminated
+through a call to <CODE>exit(1)</CODE> after
+printing a message on stderr;
+<LI><CODE>XERR_IGN</CODE>  to mean that, in case of error, 
+nothing is done or signaled.
+</UL>
+
+<P>
+When the macro <CODE>XERR_DFL</CODE> is defined, the header file <CODE>xpre.h</CODE>
+also defines the macros <CODE>XENONE</CODE>, <CODE>XEDIV</CODE>, <CODE>XEDOM</CODE>,
+<CODE>XEBADEXP</CODE>, <CODE>XFPOFLOW</CODE> and <CODE>XNERR</CODE>:
+</P>
+<PRE>
+  #define XENONE   0    /* No error         */
+  #define XEDIV    1    /* Division by zero */
+  #define XEDOM    2    /* Out of domain    */
+  #define XEBADEXP 3    /* Bad exponent     */
+  #define XFPOFLOW 4    /* Floating point overflow */
+  
+  #define XNERR    4    /* Number of the non-null error codes */
+</PRE>
+<P>
+These macros can be used, together with <CODE>xErrNo</CODE>, to recover the exact 
+type of the error occurred during the execution of a routine 
+of the HPA library.
+</P>
+<A NAME="comp_link"></A>
+<H1>6. Compiling and linking</H1>
+<P>
+Together with the HPA library is installed a little and simple
+program called <CODE>hpaconf</CODE>. 
+You can use it to quickly compile and build your programs.
+If PREFIX is the root directory chosen to install the HPA library
+(the default value for PREFIX is <CODE>/usr/local</CODE>), then <CODE>hpaconf</CODE>
+should be installed inside PREFIX/bin. You can know where <CODE>hpaconf</CODE>
+is installed by launching the command
+</P>
+<PRE>
+  which hpaconf
+</PRE>
+<P>
+in your console or terminal.
+In the following it is assumed that the directory PREFIX/bin
+is included in your PATH environment variable (This is surely
+true if the command <CODE>which</CODE> was able to find <CODE>hpaconf</CODE>).  
+</P>
+<P>
+<CODE>hpaconf</CODE> recognizes four options:
+</P>
+<DL>
+<DT><CODE>-v</CODE> </DT><DD>
+  to return the version of HPA installed on your system,
+<DT><CODE>-c</CODE> </DT><DD>
+  to return the flags needed to compile with HPA,
+<DT><CODE>-l</CODE> </DT><DD>
+  to return the flags needed to link against HPA,
+<DT><CODE>-n</CODE> </DT><DD>
+  to print a newline at the end of the output.
+</DL>
+
+<P>
+The option <CODE>-v</CODE> cannot be used together with the options <CODE>-c</CODE> and <CODE>-l</CODE>,
+but it may be used together with <CODE>-n</CODE>:
+</P>
+<PRE>
+  hpaconf -v
+</PRE>
+<P>
+prints on the standard output (console) 
+the version of HPA installed on your system,
+</P>
+<PRE>
+  hpaconf -v -n 
+</PRE>
+<P>
+or 
+</P>
+<PRE>
+  hpaconf -n -v
+</PRE>
+<P>
+(order does not matter) behaves exactly the same but 
+also prints a newline to force the following output to be written on the next line.
+</P>
+<P>
+The options <CODE>-c</CODE> and <CODE>-l</CODE> cannot be used together with <CODE>-v</CODE>, but they 
+can be used both at the same time and can also be accompanied by the option 
+<CODE>-n</CODE>. Of course, order does not matter.
+</P>
+<PRE>
+  hpaconf -c
+</PRE>
+<P>
+prints on the standard output the flags needed to compile with HPA,
+</P>
+<PRE>
+  hpaconf -l
+</PRE>
+<P>
+prints on the standard output the flags needed to link  against HPA,
+</P>
+<PRE>
+  hpaconf -c -l 
+</PRE>
+<P>
+or 
+</P>
+<PRE>
+  hpaconf -l -c
+</PRE>
+<P>
+prints both the flags to compile with HPA and the flags to link against HPA.
+</P>
+<P>
+If the option <CODE>-n</CODE> is added, then the information printed is followed
+by a newline. 
+An example will show the usefulness of <CODE>hpaconf</CODE>.
+To compile the source file <CODE>example.c</CODE> you should tell the compiler 
+where looking for the header files of HPA and for the library itself; 
+to do this it is sufficient to specify the related paths through the options
+-I and -L, at least if you are using GCC/G++ as C/C++ compiler.
+But in this way you are constrained to remember the path
+where HPA was installed, and this is quite uncomfortable.
+With <CODE>hpaconf</CODE> you can simply use the command
+</P>
+<PRE>
+  cc -c $(hpaconf -c) example.c
+</PRE>
+<P>
+or
+</P>
+<PRE>
+  cc -c `hpaconf -c` example.c
+</PRE>
+<P>
+to compile the file <CODE>example.c</CODE> and obtain the object file <CODE>example.o</CODE>.
+The previous one is the right form of the command 
+for a shell sh compatible, like ash, bash or ksh. 
+If you are using another shell, probably the
+right form to obtain the expansion of the command <CODE>hpaconf -c</CODE>
+will be another one (see the manual of your preferred shell for this).
+On GNU/Linux, bash is the default shell for all users. If this is
+not true for your machine, ask your system administrator.
+Once you have obtained the object file <CODE>example.o</CODE>, you may do the linkage
+by using the command (for a shell sh-compatible):
+</P>
+<PRE>
+  cc example.o $(hpaconf -l) -o example
+</PRE>
+<P>
+or
+</P>
+<PRE>
+  cc example.o `hpaconf -l` -o example
+</PRE>
+<P>
+If you want, you may also compile and build at the same time by using
+</P>
+<PRE>
+  cc example.c $(hpaconf -c -l) -o example
+</PRE>
+<P>
+or
+</P>
+<PRE>
+  cc example.c `hpaconf -c -l` -o example
+</PRE>
+<P>
+which will compile <CODE>example.c</CODE> and build the program <CODE>example</CODE>.
+Naturally, compiling and building at the same time is only
+possible when the source code of your program is entirely contained in one
+file.
+</P>
+<P>
+The <CODE>hpaconf</CODE> program may also tell you which options were used 
+to compile the HPA library for the system where you are working.
+This information is displayed, together with hints about usage, when
+<CODE>hpaconf</CODE> is called with no options. This is the output obtained
+on my personal machine:
+</P>
+<PRE>
+  ivano@darkstar[~]$  hpaconf 
+  *** Usage:  hpaconf [-v] [-n] or
+  ***         hpaconf [-c] [-l] [-n]
+  
+  *** Meaning of the options:
+      -v      returns the current version of the HPA library,
+      -c      returns the flags to compile with HPA library,
+      -l      returns the flags to link against HPA library,
+      -n      adds a newline at the end of the output.
+  
+  ----- Features of the HPA library (including build options) -----
+  
+  Size of an extended precision floating point value (in bytes): 16
+  Number of bits available for the sign:     1
+  Number of bits available for the exponent: 15
+  Number of bits available for the mantissa: 112
+  Decimal digits of accuracy:               ~33
+  Dynamic range supported:          2^16384 &gt; x &gt; 2^(-16383)   i.e.
+                               1.19*10^4932 &gt; x &gt; 1.68*10^-(4932)
+  In case of floating point error
+  the global (extern) variable 'xErrNo' is suitably set
+</PRE>
+<P>
+The first value shown after the header <CODE>Features of the HPA library</CODE>
+is the size of a variable of <CODE>struct xpr</CODE> type. When I installed the
+HPA library on my machine, I chose to compile it by setting <CODE>XDIM</CODE>
+to 7. Then a variable of type <CODE>struct xpr</CODE> turns out to have a size of
+16 = 2 * 7 + 2  bytes.
+Since <CODE>XDIM</CODE> could have been set to another value on the system
+where you are working (<CODE>XDIM</CODE> could also have the values
+11, 15, 19, 23, 27 and 31), the first value shown by <CODE>hpaconf</CODE>
+could differ on your machine.
+The next 2 values (bits available for sign and exponent) are
+the same for all installations.
+The decimal digits of accuracy depend on the value of <CODE>XDIM</CODE>,
+namely, they increase together with <CODE>XDIM</CODE> till to a maximum of
+149 when <CODE>XDIM</CODE> is 31. As you can see, the value of <CODE>XDIM</CODE>
+determines the accuracy provided by the mathematical functions of 
+the HPA library. Even if a larger value for <CODE>XDIM</CODE> implies 
+a greater accuracy, together with <CODE>XDIM</CODE> increase the memory
+and the time requested by the routines of the HPA library
+to perform their computations.
+</P>
+<P>
+The dynamic range supported by the HPA library is always the same, or almost.
+The HPA library can be compiled to deal differently with
+the error conditions (see <A HREF="#runtime_errors">previous section</A>).
+In the last line of the output of <CODE>hpaconf</CODE>, you can find
+information about the way runtime errors are handled.
+This information can also be retrieved from the file
+<CODE>hpaconf.h</CODE>, as explained in the previous section.
+</P>
+<P>
+The file <CODE>hpaconf.h</CODE> also defines the macro HPA_VERSION, a string
+containing the version number of the release of the
+HPA library currently in use.
+</P>
+<A NAME="real_arith"></A>
+<H1>7. Real arithmetic</H1>
+<P>
+The first module of the HPA library is made of functions for 
+Extended Precision Floating Point Arithmetic, functions of the 
+Extended Precision Math Library, and of applications of the Extended 
+Precision Arithmetic. They are all declared in the file <CODE>xpre.h</CODE>
+together with some macros and numerical constants.
+The header file <CODE>xpre.h</CODE> also defines the structure <CODE>xoutflags</CODE>:
+</P>
+<PRE>
+    struct xoutflags
+    {
+      short fmt, notat, sf, mfwd, lim;
+      signed char padding, ldel, rdel;
+    };
+</PRE>
+<P>
+A structure of such kind is used by the output functions
+<CODE>xfout()</CODE>, <CODE>xout()</CODE> and <CODE>xsout()</CODE> to know how they have to print
+numbers.
+</P>
+<P>
+The field <CODE>notat</CODE> refers to the notation: it can
+be equal to <CODE>XOUT_SCIENTIFIC</CODE> (scientific notation) or to <CODE>XOUT_FIXED</CODE>
+(floating point notation). 
+</P>
+<P>
+Both <CODE>XOUT_SCIENTIFIC</CODE> and <CODE>XOUT_FIXED</CODE> are
+macros defined inside <CODE>xpre.h</CODE>.
+</P>
+<P>
+The field <CODE>sf</CODE> refers to the sign: if <CODE>sf</CODE> is not zero, then every non-negative
+number is printed with a plus sign (<CODE>+</CODE>) ahead.
+</P>
+<P>
+The field <CODE>mfwd</CODE> indicates the minimum field width to use in
+printing numbers. When <CODE>mfwd</CODE> is zero no minimum field width is used.
+When <CODE>mfwd</CODE> is negative, then the actual minimum field width is given
+by <CODE>-mfwd</CODE> and the printed number is left adjusted on the
+field boundary (default is right justification).
+</P>
+<P>
+<CODE>lim</CODE> has a different meaning depending on the notation in use.
+Together with the scientific notation, <CODE>lim</CODE> gives the number of
+decimal digits to the right of the decimal point
+(<CODE>lim+1</CODE> = total digits displayed). Otherwise, <CODE>lim + 1</CODE> is the
+number of significant digits displayed. When <CODE>lim</CODE> is negative,
+the default value (<CODE>6</CODE>) is used.
+</P>
+<P>
+Finally, <CODE>padding</CODE> defines the padding character to use together
+with a non-zero minimum field width.
+If <CODE>padding</CODE> is negative, then the default padding char (i.e. the
+blank character) is used.
+</P>
+<P>
+The fields <CODE>fmt</CODE>, <CODE>ldel</CODE> and <CODE>rdel</CODE> are ignored by the functions
+<CODE>xfout()</CODE>, <CODE>xout()</CODE> and <CODE>xsout()</CODE>. They are only used by the
+functions <CODE>cxfout()</CODE>, <CODE>cxout()</CODE> and <CODE>cxsout()</CODE> to
+format and print complex numbers.
+</P>
+<P>
+<CODE>fmt</CODE> specifies the format to use in printing complex numbers.
+The possible values for <CODE>fmt</CODE> are <CODE>XFMT_STD</CODE>, <CODE>XFMT_RAW</CODE> and <CODE>XFMT_ALT</CODE>
+(these macros are declared inside <CODE>cxpre.h</CODE>).
+If <CODE>fmt == XFMT_STD</CODE>, then the complex number <CODE>(a, b)</CODE> is printed
+using the notation <CODE>a+bi</CODE> or <CODE>a-bi</CODE> (depending on the sign of <CODE>b</CODE>).
+Of course, <CODE>a</CODE> and <CODE>b</CODE> are printed according to the rules
+exposed above.
+If <CODE>fmt == XFMT_RAW</CODE>, then <CODE>(a, b)</CODE> is printed in the form
+</P>
+<PRE>
+  a&lt;two blank spaces&gt;b
+</PRE>
+<P>
+just like in
+</P>
+<PRE>
+  1.0  2.5
+</PRE>
+<P>
+assuming that <CODE>a = 1.0</CODE> and <CODE>b = 2.5</CODE>.
+Finally, if <CODE>fmt == XFMT_ALT</CODE>, then <CODE>(a,b)</CODE> is printed
+as
+</P>
+<PRE>
+  &lt;left delimiter&gt;a, b&lt;right delimiter&gt;
+</PRE>
+<P>
+where &lt;left_delimiter&gt; and &lt;right_delimiter&gt; are the characters
+given by the fields <CODE>ldel</CODE> and <CODE>rdel</CODE> respectively.
+If <CODE>ldel &lt; 0</CODE> or <CODE>rdel &lt; 0</CODE>, then <CODE>(</CODE> or <CODE>)</CODE>  is used as
+default &lt;left_delimiter&gt; / &lt;right_delimiter&gt;.
+</P>
+<P>
+Care that none of the functions <CODE>xfout()</CODE>, <CODE>xout()</CODE>, <CODE>xsout()</CODE>,
+<CODE>cxfout()</CODE>, <CODE>cxout()</CODE> or <CODE>cxsout()</CODE> adds a newline at the end
+of the printed number.
+</P>
+<A NAME="toc8"></A>
+<H2>7.1. Real constants</H2>
+<P>
+The header file <CODE>xpre.h</CODE> defines several constants. Between the
+constants defined in <CODE>xpre.h</CODE> there are those ones
+corresponding to particular mathematical values:
+</P>
+<PRE>
+    extern const struct xpr xZero, xOne, xTwo, xTen;
+    extern const struct xpr xPinf, xMinf, xNaN;
+    extern const struct xpr xPi, xPi2, xPi4, xEe, xSqrt2;
+    extern const struct xpr xLn2, xLn10, xLog2_e, xLog2_10, 
+                            xLog10_e;
+</PRE>
+<P>
+xZero (= 0), xOne (= 1), xTwo (= 2)and xTen (= 10) 
+do not need a comment.
+xPi, xPi2, xPi4, xEe, xSqrt2, xLn2, xLn10, xLog2_e, xLog2_10, xLog10_e
+represent, respectively, the values PI (= 3.14159...), PI/2, PI/4,
+e (= 2.7182818...), square root of 2 (= 1.4142135...), natural
+logarithm of 2 and 10, base-2 logarithm of e and 10, 10-base
+logarithm of e.
+</P>
+<P>
+xPinf, xMinf and xNan are <I>special values</I>: xPinf represents the value
+<CODE>+oo</CODE> (plus infinity), xMinf the value <CODE>-oo</CODE> (minus infinity) and xNaN
+is used to mean an invalid number (NaN stays for Not a Number).
+xPinf and xMinf are usually returned by a function to signal a
+floating point overflow, positive and negative respectively, while
+xNaN is returned by the functions converting ASCII strings to floating
+point numbers to indicate that the string given to them as argument
+does not contain any valid number.
+xPinf, xMinf and xNaN should never be used as arguments for functions,
+since this has unpredictable results.
+</P>
+<A NAME="toc9"></A>
+<H2>7.2. Extended Precision Floating Point Arithmetic</H2>
+<P>
+The arithmetic functions support the basic computations and input/output
+operations for extended precision floating point mathematics. Some
+of the operations supply capabilities designed to enhance the computational
+efficiency of this arithmetic (e.g., <CODE>xpwr</CODE>).
+What follows is their complete list including the synopsis for each of them.
+</P>
+<PRE>
+     
+</PRE>
+<P></P>
+<P>
+<B>xadd</B> - Add  or subtract two extended precision numbers.
+</P>
+<PRE>
+  struct xpr xadd(struct xpr s,struct xpr t,int f)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing first number;
+<LI><CODE>t</CODE> = structure containing second number;
+<LI><CODE>f</CODE> = control flag: if 0, then  <CODE>s</CODE> and <CODE>t</CODE> are added,
+else they are subtracted (<CODE>s-t</CODE>).
+</UL>
+
+<P>
+The value returned by <CODE>xadd()</CODE> is the result
+of the addition/subtraction. <CODE>xadd()</CODE> can return xPinf or xMinf to
+signal a floating point overflow.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xmul</B> - Multiply two extended precision numbers.
+</P>
+<PRE>
+  struct xpr xmul(struct xpr s,struct xpr t)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing first number;
+<LI><CODE>t</CODE> = structure containing second number.
+</UL>
+
+<P>
+The value returned by <CODE>xmul()</CODE> is the product <CODE>s*t</CODE>. 
+It can be xPinf or xMinf in case of overflow.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xdiv</B> - Divide one extended precision number by a second.
+</P>
+<PRE>
+  struct xpr xdiv(struct xpr s,struct xpr t)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing numerator;
+<LI><CODE>t</CODE> = structure containing denominator.
+</UL>
+
+<P>
+The value returned by <CODE>xdiv()</CODE> is the quotient <CODE>s/t</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xneg</B> - Change sign (unary minus).
+</P>
+<PRE>
+  struct xpr xneg(struct xpr s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing input number.
+</UL>
+
+<P>
+The value returned by <CODE>xneg()</CODE> is a structure containing
+its argument with the changed sign.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xabs</B> - Compute absolute value.
+</P>
+<PRE>
+  struct xpr xabs(struct xpr s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing input number.
+</UL>
+
+<P>
+The value returned by <CODE>xabs()</CODE> is a structure containing
+the absolute value of its argument.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>x_exp</B> - Extract the binary exponent.
+</P>
+<PRE>
+  int x_exp(const struct xpr *p)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>p</CODE> = pointer to an extended precision number.
+</UL>
+
+<P>
+The value returned by <CODE>x_exp()</CODE> is the binary exponent 
+(power of 2) of the number pointed to by <CODE>p</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>x_neg</B> - Test the sign of an extended precision number.
+</P>
+<PRE>
+  int x_neg(const struct xpr *p)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>p</CODE> = pointer to an extended precision number.
+</UL>
+
+<P>
+The value returned by <CODE>x_neg()</CODE> is a sign flag, with
+0 meaning positive input, 1 negative input. The input
+is, of course, the number pointed to by <CODE>p</CODE>. <I>Note that</I>
+<I>neither x_exp() nor x_neg() alter the input number.</I>
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xpwr</B> - Raise to integer powers.
+</P>
+<PRE>
+  struct xpr xpwr(struct xpr s,int n)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing input number;
+<LI><CODE>n</CODE> = power desired.
+</UL>
+
+<P>
+The return value is the <CODE>n</CODE>th power of the first argument.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xpr2</B> - Multiplication by a power of 2.
+</P>
+<PRE>
+  struct xpr xpr2(struct xpr s,int m)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing input number;
+<LI><CODE>m</CODE> = power of two desired.
+</UL>
+
+<P>
+The return value is the product of
+the first argument by the <CODE>m</CODE>th power of two.
+<CODE>xpr2()</CODE> returns xZero in case of underflow, xPinf or
+xMinf in case of overflow.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xpow</B> - Power function.
+</P>
+<PRE>
+  struct xpr xpow (struct xpr x, struct xpr y)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = base;
+<LI><CODE>y</CODE> = exponent.
+</UL>
+
+<P>
+The return value is the
+power of the first argument raised to the second one.
+Note that the first argument must be greater than zero.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xprcmp</B> - Compare two extended precision numbers.
+</P>
+<PRE>
+  int xprcmp (const struct xpr *p, const struct xpr *q)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>p</CODE> = pointer to first number;
+<LI><CODE>q</CODE> = pointer to second number.
+</UL>
+
+<P>
+The value returned by <CODE>xprcmp()</CODE> is a comparison flag, with
+ 1 meaning <CODE>*p</CODE> greater than <CODE>*q</CODE>,  0 meaning <CODE>*p</CODE> equal
+to <CODE>*q</CODE>, and -1 meaning <CODE>*p</CODE> less than <CODE>*q</CODE>. <I>Note that</I>
+<I>the input numbers are not altered by xprcmp().</I>
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xeq</B> - Check if two numbers are or are not equal.
+</P>
+<PRE>
+  int xeq (struct xpr x1, struct xpr x2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x1</CODE> = first number;
+<LI><CODE>x2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>x1</CODE> and <CODE>x2</CODE> are different, else a
+non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xneq</B> - Check if two numbers are or are not equal.
+</P>
+<PRE>
+  int xneq (struct xpr x1, struct xpr x2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x1</CODE> = first number;
+<LI><CODE>x2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>x1</CODE> and <CODE>x2</CODE> are equal, else
+a non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xgt</B> - Check if a number is greater than another one.
+</P>
+<PRE>
+  int xgt (struct xpr x1, struct xpr x2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x1</CODE> = first number;
+<LI><CODE>x2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>x1</CODE> is less or equal to <CODE>x2</CODE>, 
+else a non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xge</B> - Check if a number is greater or equal to another one.
+</P>
+<PRE>
+  int xge (struct xpr x1, struct xpr x2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x1</CODE> = first number;
+<LI><CODE>x2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>x1</CODE> is less than <CODE>x2</CODE>,
+else a non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xlt</B> - Check if a number is less than another one.
+</P>
+<PRE>
+  int xlt (struct xpr x1, struct xpr x2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x1</CODE> = first number;
+<LI><CODE>x2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>x1</CODE> is greater or equal to <CODE>x2</CODE>,
+else a non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xle</B> - Check if a number is less or equal to another one.
+</P>
+<PRE>
+  int xle (struct xpr x1, struct xpr x2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x1</CODE> = first number;
+<LI><CODE>x2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>x1</CODE> is greater than <CODE>x2</CODE>,
+else a non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xisNaN</B> - Check if a number is valid or not.
+</P>
+<PRE>
+  int xisNaN (const struct xpr *u)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>u</CODE> = pointer to a structure containing a number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>*u</CODE> is a valid number,
+else a non-null value. 
+</P>
+<P>
+<I>Remark:</I>
+A number is considered invalid (not-a-number) when its
+exponent is zero but not its mantissa.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xisPinf</B> - Check if a number is equal to <CODE>+oo</CODE>.
+</P>
+<PRE>
+  int xisPinf (const struct xpr *u)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>u</CODE> = pointer to a structure containing a number.
+</UL>
+
+<P>
+The return value is <CODE>1</CODE> if <CODE>*u</CODE> is equal to
+xPinf (<CODE>+oo</CODE>), <CODE>0</CODE> otherwise.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xisMinf</B> - Check if a number is equal to <CODE>-oo</CODE>.
+</P>
+<PRE>
+  int xisMinf (const struct xpr *u)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>u</CODE> = pointer to a structure containing a number.
+</UL>
+
+<P>
+The return value is <CODE>1</CODE> if <CODE>*u</CODE> is equal to
+xMinf (<CODE>-oo</CODE>), <CODE>0</CODE> otherwise.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xisordnumb</B> - Check if a given number is an ordinary number. 
+</P>
+<PRE>
+  int xisordnumb (const struct xpr *u)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>u</CODE> = pointer to a structure containing a number.
+</UL>
+
+<P>
+The return value is <CODE>1</CODE> if <CODE>*u</CODE> is a valid number
+and is neither xPinf (<CODE>+oo</CODE>) nor xMinf (<CODE>-oo</CODE>),
+else <CODE>0</CODE>. 
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xis0</B> - Compare a number with zero.
+</P>
+<PRE>
+  int xis0 (const struct xpr *u)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>u</CODE> = pointer to a structure containing a number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>*u</CODE> is not zero, else a non-zero value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xnot0</B> - Compare a number with zero.
+</P>
+<PRE>
+  int xnot0 (const struct xpr *u)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>u</CODE> = pointer to a structure containing a number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>*u</CODE> is zero, else a non-zero value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xsgn</B> - Obtain the sign of a number.
+</P>
+<PRE>
+  int xsgn (const struct xpr *u)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>u</CODE> = pointer to a structure containing a number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> when <CODE>*u</CODE> is zero or
+is an invalid number (not-a-number), <CODE>1</CODE> if <CODE>*u</CODE> is positive,
+<CODE>-1</CODE> if <CODE>*u</CODE> is negative.
+</P>
+<P>
+<I>Remark:</I>
+xPinf is considered a positive value, xMinf a negative value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xtodbl</B> - Cast extended precision numbers to double precision ones.
+</P>
+<PRE>
+  double xtodbl(struct xpr s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing extended precision input.
+</UL>
+
+<P>
+The return value is the double precision float corresponding
+to <CODE>s</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>dbltox</B> - Convert double precision numbers to extended precision ones.
+</P>
+<PRE>
+  struct xpr dbltox(double y)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>y</CODE> = double precision floating point input.
+</UL>
+
+<P>
+The return value is a structure containing extended equivalent
+of <CODE>y</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xtoflt</B> - Cast extended precision numbers to single precision ones.
+</P>
+<PRE>
+  float xtoflt(struct xpr s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing extended precision input.
+</UL>
+
+<P>
+The return value is the single precision float corresponding
+to <CODE>s</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>flttox</B> - Convert single precision numbers to extended precision ones.
+</P>
+<PRE>
+  struct xpr flttox(float y)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>y</CODE> = single precision floating point input.
+</UL>
+
+<P>
+The return value is a structure containing extended equivalent
+of <CODE>y</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>inttox</B> - Convert signed integers to extended precision numbers.
+</P>
+<PRE>
+  struct xpr inttox(long n)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>n</CODE> = integer input.
+</UL>
+
+<P>
+The return value is a structure containing extended equivalent
+of <CODE>n</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>uinttox</B> - Convert unsigned integers to extended precision numbers.
+</P>
+<PRE>
+  struct xpr uinttox(unsigned long n)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>n</CODE> = integer input.
+</UL>
+
+<P>
+The return value is a structure containing extended equivalent
+of <CODE>n</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>strtox</B> - Convert a floating point number, 
+expressed as a decimal ASCII string
+in a form consistent with C, into the extended precision format.
+</P>
+<PRE>
+  struct xpr strtox (const char* s, char** endptr)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = pointer to a null terminated ASCII string expressing a
+decimal number;
+<LI><CODE>endptr</CODE> = NULL, or address of a pointer defined
+outside <CODE>strtox()</CODE>.
+</UL>
+
+<P>
+The value returned by <CODE>strtox()</CODE> is a structure containing
+the input number in the extended precision format.
+</P>
+<P>
+<I>Remarks:</I>
+The <CODE>strtox()</CODE> function converts the initial portion of the string pointed to
+by <CODE>s</CODE> to its extended precision representation.
+</P>
+<P>
+The  expected  form  of  the (initial portion of the) string is: optional
+leading white space  as  recognized  by  the standard library function
+<CODE>isspace()</CODE>, an optional plus (<CODE>+</CODE>) or minus sign (<CODE>-</CODE>), and 
+then a decimal number.
+A  decimal number consists of a nonempty sequence of decimal digits possibly
+containing a radix character (decimal  point, i.e. '<CODE>.</CODE>'), optionally
+followed by a decimal exponent.   A decimal exponent consists of an
+<CODE>E</CODE> or <CODE>e</CODE>, followed by an optional plus or minus sign, followed  by
+a non-empty sequence of decimal digits, and indicates multiplication by
+a power of 10.
+</P>
+<P>
+This function returns the converted value, if any.
+If  the  correct  value  would  cause  overflow, then xPinf
+or xMinf is returned, according to the sign of the value.
+If the correct value would cause underflow, xZero is returned.
+If no conversion is performed, xNaN is returned.
+</P>
+<P>
+If <CODE>endptr</CODE> is not NULL, a pointer to the character after the last character
+used  in  the  conversion  is  stored in the location referenced by
+<CODE>endptr</CODE>.
+If no conversion is performed, the value of <CODE>s</CODE> is
+stored in the location referenced by <CODE>endptr</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>atox</B> - Convert a floating point number,
+expressed as a decimal ASCII string
+in a form consistent with C, into the extended precision format.
+</P>
+<PRE>
+  struct xpr atox(const char *s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = pointer to a null terminated ASCII string expressing a
+decimal number.
+</UL>
+
+<P></P>
+<P>
+<I>Remark:</I>
+The call  <CODE>atox(s)</CODE>  is equivalent to <CODE>strtox(s, NULL)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xfmod</B> - This function is the extended precision analog of the 
+<CODE>fmod</CODE> function from the C standard library.
+</P>
+<PRE>
+  struct xpr xfmod(struct xpr s,struct xpr t,struct xpr* q)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing argument of fmod;
+<LI><CODE>t</CODE> = structure containing base number (t must be different from zero);
+<LI><CODE>q</CODE> = pointer to store for output integer m.
+</UL>
+
+<P>
+The return value is the extended number with same sign as <CODE>s</CODE>
+and absolute value less than that of <CODE>t</CODE>, satisfying
+<CODE>s =  m*t + x</CODE>  if <CODE>s*t&gt;0</CODE>, or
+<CODE>s = -m*t + x</CODE>  if <CODE>s*t&lt;0</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xfrexp</B> - This function is the extended precision analog of the
+<CODE>frexp</CODE> function from the C standard library.
+</P>
+<PRE>
+  struct xpr xfrexp(struct xpr s,int *p)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing argument;
+<LI><CODE>p</CODE> = pointer to store for output exponent <CODE>e</CODE>.
+</UL>
+
+<P>
+The return value is the extended number satisfying
+<CODE>x = s*2^(-e)</CODE>  with  <CODE>(-1 &lt; x &lt; +1)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xfrac</B> - This function returns the fractional part of the
+input number.
+</P>
+<PRE>
+  struct xpr xfrac  (struct xpr s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing argument.
+</UL>
+
+<P>
+The return value is the fractional part of the number <CODE>s</CODE>, with
+the same sign as <CODE>s</CODE>.
+</P>
+<P>
+<I>Remark:</I>
+The fractional part of the number <CODE>s</CODE> is <CODE>0</CODE> if <CODE>s</CODE> is an
+integer number, otherwise is given by <CODE>(-)0.xyz...</CODE>,  where 
+<CODE>xyz...</CODE>  are the digits of <CODE>s</CODE> following the radix character
+(<CODE>.</CODE>) in the decimal representation. <CODE>xfrac(s)</CODE> has always
+the same sign as <CODE>s</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xtrunc</B> - This function returns the integer part of the input number.
+</P>
+<PRE>
+  struct xpr xtrunc  (struct xpr s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing argument.
+</UL>
+
+<P>
+The return value is the integer part of the number <CODE>s</CODE>, with
+the same sign as <CODE>s</CODE>.
+</P>
+<P>
+<I>Remark:</I>
+</P>
+<P>
+The integer part of the number <CODE>s</CODE> is given by  <CODE>(-)xyz...</CODE>,  where 
+<CODE>xyz...</CODE>  are the digits of <CODE>s</CODE> before the radix character (<CODE>.</CODE>) in
+its decimal representation.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xfix</B> - Obtain the integer part of a number (2nd method).
+</P>
+<PRE>
+  struct xpr xfix  (struct xpr s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing argument.
+</UL>
+
+<P>
+<I>Remark:</I>
+</P>
+<P>
+<CODE>xfix()</CODE> is provided as an alternative to <CODE>xtrunc()</CODE>. <CODE>xfix()</CODE> tries
+to take into account possible rounding errors and cancel their
+effects. The use of <CODE>xfix()</CODE> is strongly suggested whenever the argument
+is presumed to be an integer number, but it is reasonable to expect 
+that some rounding errors make its actual value a bit different from 
+that one it should be.
+For instance, when <CODE>sizeof(struct xpr) == 64</CODE>, on my machine I
+obtain
+</P>
+<PRE>
+  xtrunc (xdiv (inttox(100), inttox(100))) == xZero
+</PRE>
+<P></P>
+<P>
+while the expect result is <CODE>xOne</CODE>. This happens since
+<CODE>xdiv (inttox(100), inttox(100))</CODE> returns a number a bit lower
+than <CODE>1</CODE>. On the other hand
+</P>
+<PRE>
+  xfix (xdiv (inttox(100), inttox(100))) == xOne .
+</PRE>
+<P></P>
+<P>
+Since <CODE>xfix()</CODE> introduces another type of rounding error
+to give the correct answer in the cases similar to the previous
+one, it is not always the right choice.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xround</B> - Round an extended precision number to its nearest integer 
+value (halfway cases are rounded away from zero). 
+</P>
+<PRE>
+  struct xpr xround  (struct xpr s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing argument.
+</UL>
+
+<P>
+The return value is the integer value nearest to <CODE>s</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xceil</B> - Round an extended precision number to the smallest integral 
+value not less than it.
+</P>
+<PRE>
+  struct xpr xceil  (struct xpr s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing argument.
+</UL>
+
+<P>
+The return value is the smallest integral value not less than
+the argument.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xfloor</B> - Round an extended precision number to the largest integral 
+value not greater than it.
+</P>
+<PRE>
+  struct xpr xfloor  (struct xpr s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = structure containing argument.
+</UL>
+
+<P>
+The return value is the largest integral value not greater than
+the argument.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xpr_print</B> - Print an extended precision number in scientific or 
+floating point format to a given file.
+</P>
+<PRE>
+  void  xpr_print (FILE* stream, struct xpr u, int sc_not, 
+                   int sign, int lim)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>stream</CODE> = file where the number must be printed;
+<LI><CODE>u</CODE> = structure containing number to print;
+<LI><CODE>sc_not</CODE> = zero to mean floating point format, 
+not zero to mean scientific format;
+<LI><CODE>sign</CODE>   = not zero to put a plus sign (<CODE>+</CODE>) before the number if
+it is non-negative (in case of negative number a minus sign (<CODE>-</CODE>) 
+is printed even if the parameter <CODE>sign</CODE> is zero);
+<LI><CODE>lim</CODE>    = number of decimal digits to the right of the
+decimal point (<CODE>lim+1</CODE> = total digits displayed) in
+case of scientific format, otherwise number of significant digits - 1
+(<CODE>lim+1</CODE> = total of significant digits).
+</UL>
+
+<HR NOSHADE SIZE=1>
+<P>
+<B>xpr_asprint</B> - Convert an extended precision number to a string.
+</P>
+<PRE>
+  char* xpr_asprint (struct xpr u, int sc_not, int sign, int lim)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>u</CODE> = structure containing number to print;
+<LI><CODE>sc_not</CODE> = zero to mean floating point format, not zero to mean scientific format;
+<LI><CODE>sign</CODE>   = not zero to put a plus sign (<CODE>+</CODE>) before the number if
+it is non-negative (in case of negative number a minus sign (<CODE>-</CODE>) 
+is printed even if the parameter <CODE>sign</CODE> is zero);
+<LI><CODE>lim</CODE>    = number of decimal digits to the right of the
+decimal point (<CODE>lim+1</CODE> = total digits displayed) in
+case of scientific format, otherwise number of significant digits - 1
+(<CODE>lim+1</CODE> = total of significant digits).
+</UL>
+
+<P>
+<CODE>xpr_asprint()</CODE> returns the string with the converted number.
+The memory for this string is calloc'ed inside the function.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xprxpr</B> - Print an extended precision number in scientific format.
+</P>
+<PRE>
+  void xprxpr(struct xpr u,int lim)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>u</CODE>   = structure containing number to print;
+<LI><CODE>lim</CODE> = number of decimal digits to the right of the
+decimal point (<CODE>lim+1</CODE> = total digits displayed).
+</UL>
+
+<P>
+<I>Remark:</I>
+</P>
+<PRE>
+  xprxpr(u, lim)
+</PRE>
+<P></P>
+<P>
+is equivalent to  
+</P>
+<PRE>
+  xpr_print(stdout, u, 1, 0, lim)
+</PRE>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xtoa</B> - This function converts an extended precision number to a 
+string. Scientific format is always used.
+</P>
+<PRE>
+  char* xtoa (struct xpr u,int lim)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>u</CODE>   = structure containing number to print;
+<LI><CODE>lim</CODE> = number of decimal digits to the right of the
+decimal point (<CODE>lim+1</CODE> = total digits displayed).
+</UL>
+
+<P>
+<I>Remark:</I>
+</P>
+<PRE>
+  xtoa(u, lim)
+</PRE>
+<P></P>
+<P>
+is equivalent to  
+</P>
+<PRE>
+  xpr_asprint(u, 1, 0, lim)
+</PRE>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xbprint</B> - Print an extended precision number in binary format.
+</P>
+<PRE>
+  void xbprint (FILE* stream, struct xpr u)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>stream</CODE> = file where the number must be printed;
+<LI><CODE>u</CODE>      = structure containing number to print.
+</UL>
+
+<P>
+The <CODE>xbprint()</CODE> function supports a bit oriented analysis of
+rounding error effects. It always prints a newline (<CODE>\n</CODE>)
+at the end of the binary string.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xprint</B> - Print an extended precision number as a string of 
+hexadecimal numbers.
+</P>
+<PRE>
+  void xprint(FILE* stream, struct xpr u)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>stream</CODE> = file where the number must be printed;
+<LI><CODE>u</CODE>      = structure containing number to print.
+</UL>
+
+<P>
+The <CODE>xprint()</CODE> function supports a bit oriented analysis of
+rounding error effects. It always prints a newline (<CODE>\n</CODE>)
+at the end.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xfout</B> - Print an extended precision number on file according to 
+a given set of I/O flags.
+</P>
+<PRE>
+  int xfout (FILE * stream, struct xoutflags ofs, struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>stream</CODE> = file where the number must be printed;
+<LI><CODE>ofs</CODE>    = structure containing all I/O flags;
+<LI><CODE>x</CODE>      = structure containing number to print.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> in case of success, 
+<CODE>-1</CODE> to mean a failure.
+</P>
+<P>
+<I>Remark:</I> 
+For the definition of <CODE>struct xoutflags</CODE> and the meaning 
+of its fields see <A HREF="#real_arith">section "Real Arithmetic"</A>. 
+<CODE>xfout()</CODE> does not add any newline 
+at the end of the printed number.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xout</B> - Print an extended precision number on <CODE>stdout</CODE> according to
+a given set of I/O flags.
+</P>
+<PRE>
+  int xout (struct xoutflags ofs, struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>ofs</CODE> = structure containing all I/O flags;
+<LI><CODE>x</CODE>   = structure containing number to print.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> in case of success, <CODE>-1</CODE> to mean a failure.
+</P>
+<P>
+<I>Remark:</I> 
+For the definition of <CODE>struct xoutflags</CODE> and the meaning 
+of its fields see <A HREF="#real_arith">section "Real Arithmetic"</A>. 
+<CODE>xout()</CODE> does not add any newline 
+at the end of the printed number.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xsout</B> - Write an extended precision number on a string according to
+a given set of I/O flags.
+</P>
+<PRE>
+  int xsout (char* s, unsigned long n, struct xoutflags ofs,
+             struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE>   = pointer to a buffer of characters (char);
+<LI><CODE>n</CODE>   = size of the buffer;
+<LI><CODE>ofs</CODE> = structure containing all I/O flags;
+<LI><CODE>x</CODE>   = structure containing number to print.
+</UL>
+
+<P>
+The return value is the number of non-null characters written
+to the buffer or, if it is greater or equal than <CODE>n</CODE>, which would have been 
+written to the buffer if enough space had been available.
+</P>
+<P>
+<I>Remarks:</I>
+For the definition of <CODE>struct xoutflags</CODE> and the meaning of its fields
+see <A HREF="#real_arith">section "Real Arithmetic"</A>. 
+<CODE>xsout()</CODE> always adds a null character ('\0') at the end of 
+the written number.
+<CODE>xsout()</CODE> does not write more than <CODE>n</CODE> bytes (including
+the  trailing  '\0'). Thus, a return value of <CODE>n</CODE> or more
+means that the output was truncated. In this case, the contents of the 
+buffer pointed to by the first argument of <CODE>xsout()</CODE> are 
+completely unreliable.
+</P>
+<A NAME="toc10"></A>
+<H2>7.3. Extended Precision Math Library</H2>
+<P>
+The Extended Precision Math Library
+provides the elementary functions normally
+supported in a C math library. 
+They are designed to provide full precision accuracy.
+</P>
+<PRE>
+     
+</PRE>
+<P></P>
+<P>
+<B>xsqrt</B> - Compute the square root of an extended precision number.
+</P>
+<PRE>
+  struct xpr xsqrt(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing the input number.
+</UL>
+
+<P>
+The return value is the square root of the
+input number. A negative argument results in a domain error.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xexp</B> - Compute the exponential function.
+</P>
+<PRE>
+  struct xpr xexp(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is <CODE>e</CODE> (the base of natural logarithms) 
+raised to <CODE>x</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xexp2</B> - Compute the base-2 exponential function.
+</P>
+<PRE>
+  struct xpr xexp2(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is <CODE>2</CODE> raised to <CODE>x</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xexp10</B> - Compute the base-10 exponential function.
+</P>
+<PRE>
+  struct xpr xexp10(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is <CODE>10</CODE> raised to <CODE>x</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xlog</B> - Compute natural (base <CODE>e</CODE>) logarithms.
+</P>
+<PRE>
+  struct xpr xlog(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the natural logarithm of
+its argument. A null or negative argument results in a
+domain error.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xlog2</B> - Compute base-2 logarithms.
+</P>
+<PRE>
+  struct xpr xlog2(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the base-2 logarithm of
+its argument. A null or negative argument results in a
+domain error.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xlog10</B> - Compute base-10 logarithms.
+</P>
+<PRE>
+  struct xpr xlog10(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the base-10 logarithm of
+its argument. A null or negative argument results in a
+domain error.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xtan</B> - Tangent function.
+</P>
+<PRE>
+  struct xpr xtan(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the tangent of <CODE>x</CODE>, where <CODE>x</CODE> is
+given in radians.
+<CODE>xtan(x)</CODE> returns <CODE>xPinf</CODE> if <CODE>x</CODE> is equal to <CODE>xPi2</CODE>
+(up to an integer multiple of <CODE>xPi</CODE>),
+<CODE>xMinf</CODE> if <CODE>x</CODE> is equal to <CODE>-xPi2</CODE> (up to an
+integer multiple of <CODE>xPi</CODE>). In both cases a
+domain error is produced.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xcos</B> - Cosine function.
+</P>
+<PRE>
+  struct xpr xcos(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the cosine of <CODE>x</CODE>, where <CODE>x</CODE> is
+given in radians.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xsin</B> - Sine function.
+</P>
+<PRE>
+  struct xpr xsin(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the sine of <CODE>x</CODE>, where <CODE>x</CODE> is
+given in radians.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xatan</B> - Arc tangent function.
+</P>
+<PRE>
+  struct xpr xatan(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the arc tangent of <CODE>x</CODE> in radians and
+the  value  is  mathematically defined to be between -Pi/2
+and Pi/2 (inclusive).
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xasin</B> - Arc sine function.
+</P>
+<PRE>
+  struct xpr xasin(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function  returns the arc sine of <CODE>x</CODE> in radians and
+the value is mathematically defined to  be  between  -Pi/2
+and Pi/2 (inclusive). If <CODE>x</CODE> falls outside  the  range
+<CODE>-1</CODE> to <CODE>1</CODE>, a domain error is produced.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xacos</B> - Arc cosine function.
+</P>
+<PRE>
+  struct xpr xacos(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function  returns the arc cosine of <CODE>x</CODE> in radians and
+the value is mathematically defined to  be  between zero
+and Pi (inclusive). If <CODE>x</CODE> falls outside  the  range
+<CODE>-1</CODE> to <CODE>1</CODE>, a domain error is produced.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xatan2</B> - arc tangent function of two variables.
+</P>
+<PRE>
+  struct xpr xatan2 (struct xpr y, struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>y</CODE> = structure containing first argument;
+<LI><CODE>x</CODE> = structure containing second argument.
+</UL>
+
+<P>
+This function returns the principal value of the arc tangent of <CODE>y/x</CODE>, 
+using the signs of the two arguments to determine the 
+quadrant of the result, a real number in the range <CODE>[-xPi,xPi)</CODE>
+(<CODE>-xPi</CODE> is included, <CODE>xPi</CODE> is excluded). If <CODE>x</CODE> and <CODE>y</CODE>
+are both zero, a domain error is produced and the dummy value
+zero is returned. If <CODE>x</CODE> is zero and <CODE>y</CODE> is positive, then
+<CODE>xPi2</CODE> (i.e. PI/2) is returned. 
+If <CODE>x</CODE> is zero and <CODE>y</CODE> is negative, the function
+returns <CODE>-xPi2</CODE> (i.e. -PI/2). 
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xtanh</B> - Hyperbolic tangent function.
+</P>
+<PRE>
+  struct xpr xtanh(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the hyperbolic tangent of <CODE>x</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xcosh</B> - Hyperbolic cosine function.
+</P>
+<PRE>
+  struct xpr xcosh(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the hyperbolic cosine of <CODE>x</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xsinh</B> - Hyperbolic sine function.
+</P>
+<PRE>
+  struct xpr xsinh(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the hyperbolic sine of <CODE>x</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xatanh</B> - Hyperbolic arc tangent function.
+</P>
+<PRE>
+  struct xpr xatanh(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the hyperbolic arc tangent of <CODE>x</CODE>.
+If the absolute value of <CODE>x</CODE>  is  greater  than <CODE>1</CODE>,
+then a domain error is produced.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xasinh</B> - Hyperbolic arc sine function.
+</P>
+<PRE>
+  struct xpr xasinh(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function  returns the hyperbolic arc sine of <CODE>x</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xacosh</B> - Hyperbolic arc cosine function.
+</P>
+<PRE>
+  struct xpr xacosh(struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function  returns the hyperbolic arc cosine of <CODE>x</CODE>.
+If <CODE>x</CODE> is less than <CODE>1</CODE>, a domain error is produced.
+</P>
+<A NAME="toc11"></A>
+<H2>7.4. Applications of Extended Precision Arithmetic</H2>
+<P>
+The Tchebycheff expansion supplied with the library can be used to
+compute the Tchebycheff expansion coefficients of a function to an accuracy
+of 32 digits at least. This ability is useful in developing high accuracy function
+approximations, since the effect of rounding error on coefficients used in
+double precision can effectively be eliminated with these inputs.
+The functions provided to this purpose are <CODE>xchcof()</CODE> and
+<CODE>xevtch()</CODE>.
+</P>
+<PRE>
+     
+</PRE>
+<P></P>
+<P>
+<B>xchcof</B> - Compute the Tchebycheff expansion coefficients of a 
+specified function <CODE>f(x)</CODE>.
+</P>
+<PRE>
+  struct xpr* xchcof(int m,struct xpr (*xfunc)(struct xpr))
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>m</CODE> = index of the last coefficient (the computed coefficients will
+be <CODE>m+1</CODE>, indexed from <CODE>0</CODE> to <CODE>m</CODE>);
+<LI><CODE>xfunc</CODE> = pointer to user defined function returning extended
+precision values of the function <CODE>f()</CODE>;
+</UL>
+
+<P>
+The return value is the array of the computed coefficients.
+The equality
+</P>
+<PRE>
+  f(x) = c[0]/2 + Sum(k=1 to m) c[k]*Tk(x) 
+</PRE>
+<P>
+holds, where <CODE>Tk</CODE> is the kth  Tchebycheff polynomial.
+</P>
+<P>
+<I>Remarks:</I> 
+The memory needed by the returned array is malloc'ed
+inside the function <CODE>xchcof()</CODE>. 
+To avoid memory leaks it should be explicitly freed through a call to free().
+In case of insufficient memory <CODE>xchcof()</CODE> will return NULL.
+</P>
+<P>
+If <CODE>m &lt;= XMAX_DEGREE (= 50)</CODE>, then the array returned by <CODE>xchcof()</CODE>
+will have exactly <CODE>m+1</CODE> elements, indexed from <CODE>0</CODE> to <CODE>m</CODE>.
+If <CODE>m &gt; XMAX_DEGREE</CODE>, then <CODE>xchcof()</CODE> will behave as if
+<CODE>m</CODE> were equal to <CODE>XMAX_DEGREE</CODE>, namely,
+the array returned by <CODE>xchcof()</CODE> will have only 
+<CODE>XMAX_DEGREE + 1</CODE> elements, indexed from <CODE>0</CODE> to <CODE>XMAX_DEGREE</CODE>. 
+In other words, a value of <CODE>m</CODE> greater than <CODE>XMAX_DEGREE</CODE> is 
+ignored and replaced by <CODE>XMAX_DEGREE</CODE>.
+<CODE>XMAX_DEGREE</CODE> is a macro declared inside the header file
+<CODE>xpre.h</CODE> .
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>xevtch</B> - Evaluate an extended precision Tchebycheff expansion.
+</P>
+<PRE>
+  struct xpr xevtch(struct xpr x,struct xpr *a,int m)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>x</CODE> = structure containing function argument;
+<LI><CODE>a</CODE> = structure array containing expansion coefficients;
+<LI><CODE>m</CODE> = maximum index of coefficient array (dimension=<CODE>m+1</CODE>).
+</UL>
+
+<P>
+The return value is the number given by the formula
+</P>
+<PRE>
+  f(x) = Sum(k=0 to m) a[k]*Tk(x), 
+</PRE>
+<P>
+where <CODE>Tk</CODE> is the kth  Tchebycheff polynomial.
+</P>
+<A NAME="toc12"></A>
+<H1>8. Complex Arithmetic</H1>
+<P>
+The second module of the HPA library is formed by 
+functions for Extended Precision Complex Arithmetic and functions 
+of the Extended Precision Complex Math Library.
+They are all declared in the file <CODE>cxpre.h</CODE> together with some 
+macros and numerical constants.
+</P>
+<A NAME="toc13"></A>
+<H2>8.1. Complex constants</H2>
+<P>
+The header file <CODE>cxpre.h</CODE> defines the constants
+cxZero (= 0), cxOne (= 1) and cxIU (= imaginary unit):
+</P>
+<PRE>
+    extern const struct cxpr cxZero;
+    extern const struct cxpr cxOne;
+    extern const struct cxpr cxIU;
+</PRE>
+<P>
+which require no explanation.
+</P>
+<A NAME="toc14"></A>
+<H2>8.2. Extended Precision Complex Arithmetic</H2>
+<P>
+The functions for complex arithmetic support the basic computations
+and input/output operations with extended precision complex values.
+Some of the functions supply capabilities designed to enhance the 
+computational efficiency of the complex arithmetic (e.g., <CODE>cxpwr</CODE> and <CODE>cxpow</CODE>). 
+What follows is the complete list of the functions 
+with related synopses.
+</P>
+<PRE>
+     
+</PRE>
+<P></P>
+<P>
+<B>cxreset</B> - Make a new complex number from its real
+and imaginary parts.
+</P>
+<PRE>
+  struct cxpr cxreset (struct xpr re, struct xpr im)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>re</CODE> = structure containing real part;
+<LI><CODE>im</CODE> = structure containing imaginary part.
+</UL>
+
+<P>
+The value returned by <CODE>cxreset()</CODE> is the complex
+number having <CODE>re</CODE> as its real part, <CODE>im</CODE>
+as its imaginary part.
+</P>
+<P>
+<I>Remark:</I>
+<CODE>cxreset()</CODE> is also available in the form of a macro:
+</P>
+<PRE>
+  #define CXRESET(re, im) (struct cxpr){re, im}
+</PRE>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxconv</B> - Convert a real number into a complex one.
+</P>
+<PRE>
+  struct cxpr cxconv (struct xpr x)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>re</CODE> = structure containing real part.
+</UL>
+
+<P>
+The value returned by <CODE>cxconv()</CODE> is the complex
+number having <CODE>x</CODE> as its real part, zero
+as its imaginary part.
+</P>
+<P>
+<I>Remark:</I>
+<CODE>cxconv()</CODE> is also available in the form of a macro:
+</P>
+<PRE>
+  #define CXCONV(x) (struct cxpr){x, xZero}
+</PRE>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxre</B> - Obtain the real part of a complex number.
+</P>
+<PRE>
+  struct xpr cxre (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The value returned by <CODE>cxre(z)</CODE> is the real part of <CODE>z</CODE>.
+</P>
+<P>
+<I>Remark:</I>
+<CODE>cxre()</CODE> is also available in the form of a macro:
+</P>
+<PRE>
+  #define CXRE(z) (z).re
+</PRE>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxim</B> - Obtain the imaginary part of a complex number.
+</P>
+<PRE>
+  struct xpr cxim (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The value returned by <CODE>cxim(z)</CODE> is the imaginary part of <CODE>z</CODE>.
+</P>
+<P>
+<I>Remark:</I>
+<CODE>cxim()</CODE> is also available in the form of a macro:
+</P>
+<PRE>
+  #define CXIM(z) (z).im
+</PRE>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxswap</B> - Swap the real and the imaginary part
+of a complex number.
+</P>
+<PRE>
+  struct cxpr cxswap (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The value returned by <CODE>cxswap(z)</CODE> is the complex
+number <CODE>{cxim(z), cxre(z)}</CODE>.
+</P>
+<P>
+<I>Remark:</I>
+<CODE>cxswap()</CODE> is also available in the form of a macro:
+</P>
+<PRE>
+  #define CXSWAP(z) (struct cxpr){(z).im, (z).re}
+</PRE>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxconj</B> - Calculate the complex conjugate of a complex number.
+</P>
+<PRE>
+  struct cxpr cxconj (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The <CODE>cxconj()</CODE> function returns the complex conjugate value of
+its argument, i.e. the value obtained by changing the sign of the
+imaginary part.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxneg</B> - Change sign (unary minus)
+</P>
+<PRE>
+  struct cxpr cxneg (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+<CODE>cxneg(z)</CODE> returns the complex number <CODE>-z</CODE>: if
+<CODE>z = a+ib</CODE>, then <CODE>cxneg(z)</CODE> returns <CODE>-a-ib</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxinv</B> - Obtain the reciprocal of a complex number.
+</P>
+<PRE>
+  struct cxpr cxinv (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The value returned by <CODE>cxinv()</CODE> is the
+reciprocal of its argument. If <CODE>z</CODE> is zero,
+then a division-by-zero error is produced.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxabs</B> - Calculate the absolute value of a complex number.
+</P>
+<PRE>
+  struct xpr cxabs (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+<CODE>cxabs(z)</CODE> returns the absolute value of the complex number <CODE>z</CODE>.
+The result is a real number.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxarg</B> - Calculate the argument of a complex number.
+</P>
+<PRE>
+  struct xpr cxarg (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+<CODE>cxarg(z)</CODE> returns the argument or phase angle 
+of the complex number <CODE>z</CODE>. The result is a real number
+in the range <CODE>[-xPi,xPi)</CODE> (<CODE>-xPi</CODE> is included, <CODE>xPi</CODE> is excluded).
+<CODE>cxarg(z)</CODE> is equivalent to <CODE>xatan2(z.im, z.re)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxadd</B> - Add/subtract two extended precision complex numbers.
+</P>
+<PRE>
+  struct cxpr cxadd (struct cxpr z1, struct cxpr z2, int k)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = structure containing first number;
+<LI><CODE>z2</CODE> = structure containing second number;
+<LI><CODE>k</CODE> = control flag: if 0, then  <CODE>z1</CODE> and <CODE>z2</CODE> are added,
+else they are subtracted (<CODE>z1-z2</CODE>).
+</UL>
+
+<P>
+The value returned by <CODE>cxadd()</CODE> is the result
+of the addition/subtraction.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxsum</B> - Add two extended precision complex numbers.
+</P>
+<PRE>
+  struct cxpr cxsum (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = structure containing first number;
+<LI><CODE>z2</CODE> = structure containing second number.
+</UL>
+
+<P>
+The value returned by <CODE>cxsum()</CODE> is the result
+of the addition <CODE>z1 + z2</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxsub</B> - Subtract two extended precision complex numbers.
+</P>
+<PRE>
+  struct cxpr cxsub (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = structure containing first number;
+<LI><CODE>z2</CODE> = structure containing second number.
+</UL>
+
+<P>
+The value returned by <CODE>cxsub()</CODE> is the result
+of the subtraction <CODE>z1 - z2</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxmul</B> - Multiply two extended precision complex numbers.
+</P>
+<PRE>
+  struct cxpr cxmul (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = structure containing first number;
+<LI><CODE>z2</CODE> = structure containing second number.
+</UL>
+
+<P>
+The value returned by <CODE>cxmul()</CODE> is the
+product <CODE>z1 * z2</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxrmul</B> - Multiply a complex number by a real one.
+</P>
+<PRE>
+  struct cxpr cxrmul (struct xpr c, struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>c</CODE> = structure containing a real number;
+<LI><CODE>z</CODE> = structure containing a complex number.
+</UL>
+
+<P>
+The value returned by <CODE>cxrmul()</CODE> is the
+product <CODE>c * z</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxdrot</B> - Multiply a complex number by the imaginary unit.
+</P>
+<PRE>
+  struct cxpr cxdrot (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The value returned by <CODE>cxdrot(z)</CODE> is the product of
+<CODE>z</CODE> times the imaginary unit.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxrrot</B> - Multiply a complex number by <CODE>-1i</CODE>, where 
+<CODE>1i</CODE> is the imaginary unit.
+</P>
+<PRE>
+  struct cxpr cxrrot (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The value returned by <CODE>cxrrot(z)</CODE> is the product of
+<CODE>z</CODE> times the negative imaginary unit.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxdiv</B> - Divide two extended precision complex numbers.
+</P>
+<PRE>
+  struct cxpr cxdiv (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = structure containing first number;
+<LI><CODE>z2</CODE> = structure containing second number.
+</UL>
+
+<P>
+The value returned by <CODE>cxdiv(z1, z2)</CODE> is
+the quotient <CODE>z1 / z2</CODE>. If <CODE>z2</CODE> is zero, then a
+division-by-zero error is produced.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxgdiv</B> - Gaussian division between complex numbers having
+both real and imaginary part integer.
+</P>
+<PRE>
+  struct cxpr cxgdiv (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = structure containing first number;
+<LI><CODE>z2</CODE> = structure containing second number.
+</UL>
+
+<P>
+After eventually rounding <CODE>z1</CODE> and <CODE>z2</CODE> by means of
+<CODE>cxround()</CODE> (see below), <CODE>cxgdiv(z1, z2)</CODE> returns
+the quotient of the gaussian division of <CODE>z1</CODE> by <CODE>z2</CODE>. 
+If <CODE>z2</CODE> is zero, then a division-by-zero error is produced.
+</P>
+<P>
+If you do not know what gaussian division means, probably
+you will never need this function :)
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxgmod</B> - Remainder of the Gaussian division.
+</P>
+<PRE>
+  struct cxpr cxgmod (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = structure containing first number;
+<LI><CODE>z2</CODE> = structure containing second number.
+</UL>
+
+<P>
+After eventually rounding <CODE>z1</CODE> and <CODE>z2</CODE> by means of
+<CODE>cxround()</CODE> (see below), <CODE>cxgmod(z1, z2)</CODE> returns
+the remainder of the gaussian division of <CODE>z1</CODE> by <CODE>z2</CODE>.
+If <CODE>z2</CODE> is zero, then a division-by-zero error is produced.
+</P>
+<P>
+If you do not know what gaussian division means, probably
+you will never need this function :)
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxidiv</B> - Integer division.
+</P>
+<PRE>
+  struct cxpr cxidiv (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = structure containing first number;
+<LI><CODE>z2</CODE> = structure containing second number.
+</UL>
+
+<P>
+After eventually rounding <CODE>z1</CODE> and <CODE>z2</CODE> by means of
+<CODE>cxround()</CODE> (see below), <CODE>cxidiv(z1, z2)</CODE> returns
+the quotient of the integer division of <CODE>z1</CODE> by <CODE>z2</CODE>.
+If <CODE>z2</CODE> is zero, then a division-by-zero error is produced.
+<CODE>cxidiv()</CODE> is a <I>smooth</I> extension of the integer division
+between real numbers.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxmod</B> - Remainder of the integer division.
+</P>
+<PRE>
+  struct cxpr cxmod (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = structure containing first number;
+<LI><CODE>z2</CODE> = structure containing second number.
+</UL>
+
+<P>
+After eventually rounding <CODE>z1</CODE> and <CODE>z2</CODE> by means of
+<CODE>cxround()</CODE> (see below), <CODE>cxmod(z1, z2)</CODE> returns
+the remainder of the integer division of <CODE>z1</CODE> by <CODE>z2</CODE>.
+If <CODE>z2</CODE> is zero, then a division-by-zero error is produced.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxpwr</B> - Raise to integer powers.
+</P>
+<PRE>
+  struct cxpr cxpwr (struct cxpr z, int n)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing input number;
+<LI><CODE>n</CODE> = exponent.
+</UL>
+
+<P>
+The return value is the <CODE>n</CODE>th power
+of the first argument.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxpow</B> - Power function.
+</P>
+<PRE>
+  struct cxpr cxpow (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = base;
+<LI><CODE>z2</CODE> = exponent.
+</UL>
+
+<P>
+The return value is the power of the first argument
+raised to the second one.
+Note that the modulus of the first argument must be greater than zero,
+if the real part of <CODE>z2</CODE> is less or equal than zero,
+otherwise a bad-exponent error is produced.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxsqr</B> - Square of a number.
+</P>
+<PRE>
+  struct cxpr cxsqr (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the square of its argument.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxroot</B> - <CODE>n</CODE>th root of a complex number.
+</P>
+<PRE>
+  struct cxpr cxroot (struct cxpr z, int i, int n)
+</PRE>
+<P></P>
+<P>
+<CODE>cxroot(z,i,n)</CODE> returns the <CODE>i</CODE>th branch of
+the <CODE>n</CODE>th root of <CODE>z</CODE>.
+If <CODE>n</CODE> is zero or negative and the modulus of <CODE>z</CODE> is zero,
+then a bad-exponent error is produced.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxsqrt</B> - Principal branch of the square root of a complex number.
+</P>
+<PRE>
+  struct cxpr cxsqrt (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the principal branch of
+the square root of its argument.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxprcmp</B> - Compare two extended precision complex numbers.
+</P>
+<PRE>
+  struct cxprcmp_res cxprcmp (const struct cxpr* z1,
+                              const struct cxpr* z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = pointer to first number;
+<LI><CODE>z2</CODE> = pointer to second number.
+</UL>
+
+<P>
+The value returned by <CODE>cxprcmp()</CODE> is a structure formed by two
+comparison flags:
+</P>
+<PRE>
+    struct cxprcmp_res
+    {
+      int re, im;
+    };
+</PRE>
+<P>
+If the <CODE>.re</CODE> field of the returned structure is:
+</P>
+<UL>
+<LI>+1, then <CODE>z1-&gt;re</CODE> is greater than <CODE>z2-&gt;re</CODE>,
+<LI>0, then <CODE>z1-&gt;re</CODE> is equal to <CODE>z2-&gt;re</CODE>,
+<LI>-1, then <CODE>z1-&gt;re</CODE> is less than <CODE>z2-&gt;re</CODE>.
+</UL>
+
+<P>
+The meaning of the <CODE>.im</CODE> field is the same but refers
+to <CODE>z1-&gt;im</CODE> and <CODE>z2-&gt;im</CODE>.
+<I>Note that the input numbers are not altered by cxprcmp().</I>
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxis0</B> - Compare a complex number with zero.
+</P>
+<PRE>
+  int cxis0 (const struct cxpr* z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = pointer to an extended precision complex number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>*z</CODE> is not zero, else a non-zero value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxnot0</B> - Compare a complex number with zero.
+</P>
+<PRE>
+  int cxnot0 (const struct cxpr* z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = pointer to an extended precision complex number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>*z</CODE> is zero, else a non-zero value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxeq</B> - Check if two complex numbers are or are not equal.
+</P>
+<PRE>
+  int cxeq (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = first number;
+<LI><CODE>z2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>z1</CODE> and <CODE>z2</CODE> are different, else a
+non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxneq</B> - Check if two complex numbers are or are not equal.
+</P>
+<PRE>
+  int cxneq (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = first number;
+<LI><CODE>z2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>z1</CODE> and <CODE>z2</CODE> are equal, else
+a non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxgt</B> - Check if a complex number is greater than another one.
+</P>
+<PRE>
+  int cxgt (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = first number;
+<LI><CODE>z2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>z1</CODE> is not greater than <CODE>z2</CODE>, 
+else a non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxge</B> - Check if a complex number is greater or equal to another one.
+</P>
+<PRE>
+  int cxge (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = first number;
+<LI><CODE>z2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>z1</CODE> is not greater or equal to <CODE>z2</CODE>,
+else a non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxlt</B> - Check if a complex number is less than another one.
+</P>
+<PRE>
+  int cxlt (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = first number;
+<LI><CODE>z2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>z1</CODE> is not less than <CODE>z2</CODE>,
+else a non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxle</B> - Check if a complex number is less or equal to another one.
+</P>
+<PRE>
+  int cxle (struct cxpr z1, struct cxpr z2)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z1</CODE> = first number;
+<LI><CODE>z2</CODE> = second number.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> if <CODE>z1</CODE> is not less or equal to <CODE>z2</CODE>,
+else a non-null value.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>dctocx</B> - Convert a double precision complex number to
+an extended precision number.
+</P>
+<PRE>
+  struct cxpr dctocx (double re, double im)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>re</CODE> = real part of the double precision complex number;
+<LI><CODE>im</CODE> = imaginary part of the double precision complex number.
+</UL>
+
+<P>
+The value returned by <CODE>dctocx(re,im)</CODE> is the
+extended precision equivalent of the complex number
+<CODE>(re, im)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxtodc</B> - Convert an extended precision complex number to
+a double precision complex number.
+</P>
+<PRE>
+  void cxtodc (const struct cxpr *z, double *re, double *im)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = pointer to an extended precision complex number;
+<LI><CODE>re</CODE> = pointer to a double precision number;
+<LI><CODE>im</CODE> = pointer to a double precision number.
+</UL>
+
+<P>
+<CODE>cxtodc()</CODE> stores in its second and last argument respectively
+the real and the imaginary part of the number
+pointed to by its first argument.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>fctocx</B> - Convert a single precision complex number to
+an extended precision number.
+</P>
+<PRE>
+  struct cxpr fctocx (float re, float im)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>re</CODE> = real part of the single precision complex number;
+<LI><CODE>im</CODE> = imaginary part of the single precision complex number.
+</UL>
+
+<P>
+The value returned by <CODE>fctocx(re,im)</CODE> is the
+extended precision equivalent of the complex number
+<CODE>(re, im)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxtofc</B> - Convert an extended precision complex number to
+a single precision complex number.
+</P>
+<PRE>
+  void cxtofc (const struct cxpr *z, float *re, float *im)
+</PRE>
+<P></P>
+<P>
+<CODE>z</CODE> = pointer to an extended precision complex number;
+</P>
+<UL>
+<LI><CODE>re</CODE> = pointer to a single precision number;
+<LI><CODE>im</CODE> = pointer to a single precision number.
+</UL>
+
+<P>
+<CODE>cxtofc()</CODE> stores in its second and last argument respectively 
+the real and the imaginary part of the number
+pointed to by its first argument.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>ictocx</B> - Convert an integer complex number to
+an extended precision number.
+</P>
+<PRE>
+  struct cxpr ictocx (long re, long im)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>re</CODE> = real part of the integer complex number;
+<LI><CODE>im</CODE> = imaginary part of the integer complex number.
+</UL>
+
+<P>
+The value returned by <CODE>ictocx(re,im)</CODE> is the
+extended precision equivalent of the complex number
+<CODE>(re, im)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>uctocx</B> - Convert an integer complex number to
+an extended precision number.
+</P>
+<PRE>
+  struct cxpr uctocx (unsigned long re, unsigned long im)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>re</CODE> = real part of the integer complex number;
+<LI><CODE>im</CODE> = imaginary part of the integer complex number.
+</UL>
+
+<P>
+The value returned by <CODE>uctocx(re,im)</CODE> is the
+extended precision equivalent of the complex number
+<CODE>(re, im)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>strtocx</B> - Convert a floating point complex number,
+expressed as a decimal ASCII string
+in a form consistent with C, into the extended precision format.
+</P>
+<PRE>
+  struct cxpr strtocx (const char *s, char **endptr)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = pointer to a null terminated ASCII string expressing a
+complex number;
+<LI><CODE>endptr</CODE> = NULL or address of a pointer defined
+outside <CODE>strtocx()</CODE>.
+</UL>
+
+<P>
+The value returned by <CODE>strtocx()</CODE> is
+the input number in extended precision format.
+</P>
+<P>
+<I>Remarks:</I>
+The <CODE>strtocx()</CODE> function converts the initial portion of 
+the string pointed to
+by <CODE>s</CODE> to its extended precision representation.
+</P>
+<P>
+The  expected  form  of  the (initial portion of the) string is optional
+leading white space  as  recognized  by  the standard library function
+<CODE>isspace()</CODE>, an optional plus (<CODE>+</CODE>) or minus sign (<CODE>-</CODE>) and 
+then a decimal number.
+A  decimal number consists of a nonempty sequence of decimal digits possibly
+containing a radix character (decimal  point, i.e. '<CODE>.</CODE>'), optionally
+followed by a decimal exponent.   A decimal exponent consists of an
+<CODE>E</CODE> or <CODE>e</CODE>, followed by an optional plus or minus sign, followed  by
+a non-empty sequence of decimal digits, and indicates multiplication by
+a power of 10.
+</P>
+<P>
+After this decimal number there can be an <CODE>i</CODE> character or,
+alternatively, some optional white spaces,
+an optional plus (<CODE>+</CODE>) or minus sign (<CODE>-</CODE>) and 
+then another decimal number followed by an <CODE>i</CODE> character.
+Examples of valid representations of complex numbers are:
+</P>
+<P>
+<CODE>"12"</CODE>,<CODE>"34.56"</CODE>,<CODE>".7895i"</CODE>,<CODE>"-34.56-7.23i"</CODE>,
+<CODE>"-45.7   +23.4i"</CODE>.
+</P>
+<P>
+This function returns the converted value, if any.
+If  the  correct  value for the real or/and
+the imaginary part  would  cause  overflow, then xPinf
+or xMinf is returned in the corresponding field, 
+according to the sign of the value.
+If the correct value would cause underflow, xZero is returned.
+If no conversion is performed, xNaN is returned.
+</P>
+<P>
+If <CODE>endptr</CODE> is not NULL, a pointer to the character after the last character
+used  in  the  conversion  is  stored in the location referenced by
+<CODE>endptr</CODE>.
+If no conversion is performed, the value of <CODE>s</CODE> is
+stored in the location referenced by <CODE>endptr</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>atocx</B> - Convert a floating point complex number,
+expressed as a decimal ASCII string
+in a form consistent with C, into the extended precision format.
+</P>
+<PRE>
+  struct cxpr atocx (const char *s)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE> = pointer to a null terminated ASCII string expressing a
+complex number.
+</UL>
+
+<P>
+The return value is the input number converted to the
+extended precision format.
+</P>
+<P>
+<I>Remark:</I>
+The call  <CODE>atocx(s)</CODE>  is equivalent to <CODE>strtocx(s, NULL)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxpr_asprint</B> - Convert an extended precision complex 
+number to a string.
+</P>
+<PRE>
+  char *cxpr_asprint (struct cxpr z, int sc_not, int sign,
+                      int lim)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing number to print;
+<LI><CODE>sc_not</CODE> = zero to mean floating point notation, not zero to mean scientific notation;
+<LI><CODE>sign</CODE>   = not zero to put a plus sign (<CODE>+</CODE>) before the real part 
+of the number if it is non-negative (in case of negative real part 
+a minus sign (<CODE>-</CODE>) is printed even if the parameter <CODE>sign</CODE> is zero);
+<LI><CODE>lim</CODE>    = number of decimal digits to the right of the
+decimal point (<CODE>lim+1</CODE> = total digits displayed) in
+case of scientific notation, else number of significant digits - 1
+(<CODE>lim+1</CODE> = total of significant digits).
+</UL>
+
+<P>
+<CODE>cxpr_asprint()</CODE> returns the string with the converted number.
+The memory for this string is calloc'ed inside the function.
+<CODE>cxpr_asprint()</CODE> uses always the format <CODE>"a+bi"</CODE> in
+the conversion. 
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxtoa</B> - This function converts an extended precision complex
+number to a string.
+Scientific notation is always used for both real and imaginary part.
+</P>
+<PRE>
+  char *cxtoa (struct cxpr z, int lim)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE>   = structure containing number to print;
+<LI><CODE>lim</CODE> = number of decimal digits to the right of the
+decimal point (<CODE>lim+1</CODE> = total digits displayed).
+</UL>
+
+<P>
+<I>Remark:</I>
+</P>
+<PRE>
+  cxtoa(z, lim)
+</PRE>
+<P>
+is equivalent to  
+</P>
+<PRE>
+  cxpr_asprint(z, 1, 0, lim)
+</PRE>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxfrac</B> - Fractional part of both real and imaginary part.
+</P>
+<PRE>
+  struct cxpr cxfrac (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+<CODE>cxfrac(z)</CODE> returns <CODE>{xfrac(z.re), xfrac(z.im)}</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxtrunc</B> - Integer part of both real and imaginary part.
+</P>
+<PRE>
+  struct cxpr cxtrunc (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+<CODE>cxtrunc(z)</CODE> returns <CODE>{xtrunc(z.re), xtrunc(z.im)}</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxfix</B> - Integer part of both real and imaginary part (2nd method).
+</P>
+<PRE>
+  struct cxpr cxfix (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+<CODE>cxfix(z)</CODE> returns <CODE>{xfix(z.re), xfix(z.im)}</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxround</B> - Rounding real and imaginary part
+to the nearest integer values 
+(halfway cases are rounded away from zero).
+</P>
+<PRE>
+  struct cxpr cxround (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+<CODE>cxround(z)</CODE> returns <CODE>{xround(z.re), xround(z.im)}</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxfloor</B> - Rounding real and imaginary part
+to the largest integral values not greater than them. 
+</P>
+<PRE>
+  struct cxpr cxfloor (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+<CODE>cxfloor(z)</CODE> returns <CODE>{xfloor(z.re), xfloor(z.im)}</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxceil</B> - Rounding real and imaginary part
+to the smallest integral values not less than them.
+</P>
+<PRE>
+  struct cxpr cxceil (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+<CODE>cxceil(z)</CODE> returns <CODE>{xceil(z.re), xceil(z.im)}</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxpr_print</B> - Print an extended precision complex number 
+in scientific or floating point notation to a given file.
+</P>
+<PRE>
+  void cxpr_print (FILE * stream, struct cxpr z, int sc_not,
+                   int sign, int lim)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>stream</CODE> = file where the number must be printed;
+<LI><CODE>z</CODE> = structure containing number to print;
+<LI><CODE>sc_not</CODE> = zero to mean floating point notation, not zero to mean scientific notation;
+<LI><CODE>sign</CODE>   = not zero to put a plus sign (<CODE>+</CODE>) before the real part 
+of the number if it is non-negative (in case of negative real part 
+a minus sign (<CODE>-</CODE>) is printed even if the parameter <CODE>sign</CODE> is zero);
+<LI><CODE>lim</CODE>    = number of decimal digits to the right of the
+decimal point (<CODE>lim+1</CODE> = total digits displayed) in
+case of scientific notation, else number of significant digits - 1
+(<CODE>lim+1</CODE> = total of significant digits).
+</UL>
+
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxprcxpr</B> - Print an extended precision complex number
+in scientific notation.
+</P>
+<PRE>
+  void cxprcxpr (struct cxpr z, int m)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE>   = structure containing number to print;
+<LI><CODE>lim</CODE> = number of decimal digits to the right of the
+decimal point (<CODE>lim+1</CODE> = total digits displayed).
+</UL>
+
+<P>
+<I>Remark:</I>
+</P>
+<PRE>
+  cxprcxpr(z, lim)
+</PRE>
+<P>
+is equivalent to  
+</P>
+<PRE>
+  cxpr_print(stdout, z, 1, 0, lim)
+</PRE>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxprint</B> - Print an extended precision complex number as a couple
+of strings of hexadecimal numbers.
+</P>
+<PRE>
+  void cxprint (FILE * stream, struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>stream</CODE> = file where the number must be printed;
+<LI><CODE>z</CODE>      = structure containing number to print.
+</UL>
+
+<P>
+The <CODE>cxprint()</CODE> function supports a bit oriented analysis of
+rounding error effects. It always prints a newline (<CODE>\n</CODE>)
+at the end.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxfout</B> - Print an extended precision complex number to a file 
+according to a given set of I/O flags.
+</P>
+<PRE>
+  int cxfout (FILE * stream, struct xoutflags ofs, struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>stream</CODE> = file where the number must be printed;
+<LI><CODE>ofs</CODE>    = structure containing all I/O flags;
+<LI><CODE>z</CODE>      = structure containing number to print.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> in case of success, 
+<CODE>-1</CODE> to mean a failure.
+</P>
+<P>
+<I>Remark:</I> 
+For the definition of <CODE>struct xoutflags</CODE> and the meaning 
+of its fields see <A HREF="#real_arith">section "Real Arithmetic"</A>. 
+<CODE>cxfout()</CODE> does not add any newline 
+at the end of the printed number.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxout</B> - Print an extended precision complex number on <CODE>stdout</CODE> 
+according to a given set of I/O flags.
+</P>
+<PRE>
+  int cxout (struct xoutflags ofs, struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>ofs</CODE> = structure containing all I/O flags;
+<LI><CODE>z</CODE>   = structure containing number to print.
+</UL>
+
+<P>
+The return value is <CODE>0</CODE> in case of success, <CODE>-1</CODE> to mean a failure.
+</P>
+<P>
+<I>Remark:</I> 
+For the definition of <CODE>struct xoutflags</CODE> and the meaning 
+of its fields see <A HREF="#real_arith">section "Real Arithmetic"</A>.
+<CODE>cxout()</CODE> does not add any newline 
+at the end of the printed number.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxsout</B> - Write an extended precision complex number on a string
+according to a given set of I/O flags.
+</P>
+<PRE>
+  unsigned long cxsout (char *s, unsigned long n,
+                        struct xoutflags ofs, struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>s</CODE>   = pointer to a buffer of characters (char);
+<LI><CODE>n</CODE>   = size of the buffer;
+<LI><CODE>ofs</CODE> = structure containing all I/O flags;
+<LI><CODE>z</CODE>   = structure containing number to print.
+</UL>
+
+<P>
+The return value is the number of the non-null characters written
+to the buffer or, if it is greater or equal than <CODE>n</CODE>, which would have been 
+written to the buffer if enough space had been available.
+</P>
+<P>
+<I>Remark:</I>
+For the definition of <CODE>struct xoutflags</CODE> and the meaning of its fields
+see <A HREF="#real_arith">section "Real Arithmetic"</A>. 
+<CODE>cxsout()</CODE> always adds a null character ('\0') at the end of 
+the written number.
+<CODE>cxsout()</CODE> does not write more than <CODE>n</CODE> bytes (including
+the  trailing  '\0'). Thus, a return value of <CODE>n</CODE> or more
+means that the output was truncated. In this case, the contents of the 
+buffer pointed to by the first argument of <CODE>cxsout()</CODE> are 
+completely unreliable.
+</P>
+<A NAME="toc15"></A>
+<H2>8.3. Extended Precision Complex Math Library</H2>
+<P>
+The Extended Precision Complex Math Library 
+provides the elementary functions normally
+supported in a complex math library. 
+They are designed to provide full precision accuracy. 
+</P>
+<PRE>
+     
+</PRE>
+<P></P>
+<P>
+<B>cxexp</B> - Compute the complex exponential function.
+</P>
+<PRE>
+  struct cxpr cxexp (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is <CODE>e</CODE> (the base of natural logarithms) 
+raised to <CODE>z</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxexp2</B> - Compute the base-2 complex exponential function.
+</P>
+<PRE>
+  struct cxpr cxexp2 (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is <CODE>2</CODE> raised to <CODE>z</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxexp10</B> - Compute the base-10 complex exponential function.
+</P>
+<PRE>
+  struct cxpr cxexp10 (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is <CODE>10</CODE> raised to <CODE>z</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxlog</B> - Compute natural (base <CODE>e</CODE>) logarithm of a complex number.
+</P>
+<PRE>
+  struct cxpr cxlog (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the natural logarithm of
+its argument. A null argument results in a
+domain error.
+The imaginary part of the result lies in the interval
+<CODE>[-xPi,xPi)</CODE> (<CODE>-xPi</CODE> is included, <CODE>xPi</CODE> is excluded).
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxlog2</B> - Compute base-2 logarithm of a complex number.
+</P>
+<PRE>
+  struct cxpr cxlog2 (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the base-2 logarithm of
+its argument. A null argument results in a
+domain error.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxlog10</B> - Compute base-10 logarithm of a complex number.
+</P>
+<PRE>
+  struct cxpr cxlog10 (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the base-10 logarithm of
+its argument. A null argument results in a
+domain error.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxlog_sqrt</B> - Compute natural (base <CODE>e</CODE>) logarithm of the
+principal branch of the square root of a complex number.
+</P>
+<PRE>
+  struct cxpr cxlog_sqrt (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the natural logarithm of
+the principal branch of the square root of its argument. 
+A null argument results in a domain error.
+The imaginary part of the result lies in the range
+<CODE>[-xPi2,xPi2)</CODE> (<CODE>-xPi2</CODE> is included, <CODE>xPi2</CODE> is excluded).
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxtan</B> - Complex tangent function.
+</P>
+<PRE>
+  struct cxpr cxtan (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the tangent of the complex number <CODE>z</CODE>.
+<CODE>cxtan(z)</CODE> yields a domain error if the imaginary
+part of <CODE>z</CODE> is null and the real part is equal,
+up to an integer multiple of <CODE>xPi</CODE>, to <CODE>xPi2</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxcos</B> - Complex cosine function.
+</P>
+<PRE>
+  struct cxpr cxcos (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the cosine of the complex number <CODE>z</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxsin</B> - Complex sine function.
+</P>
+<PRE>
+  struct cxpr cxsin (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the sine of the complex number <CODE>z</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxatan</B> - Complex arc tangent function.
+</P>
+<PRE>
+  struct cxpr cxatan (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the arc tangent of the complex 
+number <CODE>z</CODE>, i.e. a number <CODE>w</CODE> such that
+<CODE>z = tan(w)</CODE>.
+If the real part of <CODE>z</CODE> is null and the
+imaginary part is equal to <CODE>+1</CODE> or <CODE>-1</CODE>,
+then a domain error is produced.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxasin</B> - Complex arc sine function.
+</P>
+<PRE>
+  struct cxpr cxasin (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the arc sine of the complex 
+number <CODE>z</CODE>, i.e. a number <CODE>w</CODE> such that
+<CODE>z = sin(w)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxacos</B> - Complex arc cosine function.
+</P>
+<PRE>
+  struct cxpr cxacos (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the arc cosine of the complex 
+number <CODE>z</CODE>, i.e. a number <CODE>w</CODE> such that
+<CODE>z = cos(w)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxtanh</B> - Complex hyperbolic tangent function.
+</P>
+<PRE>
+  struct cxpr cxtanh (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the hyperbolic tangent
+of the complex number <CODE>z</CODE>.
+<CODE>cxtanh(z)</CODE> yields a domain error if the real
+part of <CODE>z</CODE> is null and the imaginary part is equal,
+up to an integer multiple of <CODE>xPi</CODE>, to <CODE>xPi2</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxcosh</B> - Complex hyperbolic cosine function.
+</P>
+<PRE>
+  struct cxpr cxcosh (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the hyperbolic cosine of 
+the complex number <CODE>z</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxsinh</B> - Complex hyperbolic sine function.
+</P>
+<PRE>
+  struct cxpr cxsinh (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+The return value is the hyperbolic sine of 
+the complex number <CODE>z</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxatanh</B> - Complex hyperbolic arc tangent function.
+</P>
+<PRE>
+  struct cxpr cxatanh (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function returns the hyperbolic arc tangent of 
+the complex number <CODE>z</CODE>, i.e. a number <CODE>w</CODE> such that
+<CODE>z = tanh(w)</CODE>.
+If the imaginary part of <CODE>z</CODE> is null and the
+real part is equal to <CODE>+1</CODE> or <CODE>-1</CODE>,
+then a domain error is produced.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxasinh</B> - Complex hyperbolic arc sine function.
+</P>
+<PRE>
+  struct cxpr cxasinh (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function  returns the hyperbolic arc sine of 
+the complex number <CODE>z</CODE>, i.e. a number <CODE>w</CODE> such that
+<CODE>z = sinh(w)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<P>
+<B>cxacosh</B> - Complex hyperbolic arc cosine function.
+</P>
+<PRE>
+  struct cxpr cxacosh (struct cxpr z)
+</PRE>
+<P></P>
+<UL>
+<LI><CODE>z</CODE> = structure containing function argument.
+</UL>
+
+<P>
+This function  returns the hyperbolic arc cosine of 
+the complex number <CODE>z</CODE>, i.e. a number <CODE>w</CODE> such that 
+<CODE>z = cosh(w)</CODE>.
+</P>
+<HR NOSHADE SIZE=1>
+<PRE>
+  
+</PRE>
+<P>
+<I>FINAL REMARK:</I>
+The header file <CODE>cxpre.h</CODE> also defines the macros
+<CODE>cxconvert</CODE>, <CODE>cxdiff</CODE>, <CODE>cxprod</CODE> and <CODE>cxipow</CODE>:
+</P>
+<PRE>
+  #define cxconvert cxconv
+  #define cxdiff cxsub
+  #define cxprod cxmul
+  #define cxipow cxpwr
+</PRE>
+<P>
+This allows to use <CODE>cxconvert</CODE> as synonym of <CODE>cxconv</CODE>,
+<CODE>cxdiff</CODE> as synonym of <CODE>cxsub</CODE>, <CODE>cxprod</CODE> in place
+of <CODE>cxmul</CODE>, and <CODE>cxipow</CODE> for <CODE>cxpwr</CODE>.
+</P>
+<A NAME="toc16"></A>
+<H1>9. The C++ interface</H1>
+<P>
+The HPA library supplies a C++ wrapper allowing to
+perform high precision computations with the
+same syntax of the normal code.
+Using the C++ wrapper permits you to write things like:
+</P>
+<PRE>
+  // Compute the factorial of the integer n
+  
+  xreal factorial(xreal n)
+  {
+          xreal i;
+          xreal product = 1;
+          for (i=2; i &lt;= n; i++)
+                  product *= i;
+          return product;
+  }
+</PRE>
+<P>
+Technically, the C++ wrapper is contained in a separate
+library. However, this module is distributed together
+with the HPA library as an extension to it.
+This section of the manual describes 
+the C++ interface of this extension.
+This one is formed by two classes, called <CODE>xreal</CODE>
+and <CODE>xcomplex</CODE> respectively.
+The type <CODE>xreal</CODE> can be used to declare or define
+real variables. In addition, it defines the mathematical
+operations and functions which can be used with them.
+The same is for the type <CODE>xcomplex</CODE> with respect to
+complex variables and their manipulation. 
+Once you have variables of <CODE>xreal</CODE> and <CODE>xcomplex</CODE> type,
+you can use the usual C++ syntax, but all computations 
+will be performed with the high precision math library. 
+Of course, this possibility
+greatly simplifies the writing of code.
+Note the difference between 
+</P>
+<PRE>
+  struct xpr x, y;
+  char buffer[256];
+  
+  while ( (fgets (buffer, 256, stdin)) )
+  {
+    x = atox (buffer);
+    printf ("The square root of 2 * %s + 1 is ", buffer);
+    y = xadd (xpr2(x, 1), xOne, 0);
+    xprxpr (xsqrt (y), 30);
+    putchar ('\n');
+  }
+</PRE>
+<P>
+and its C++ version:
+</P>
+<PRE>
+  xreal x;
+  
+  while ( x.getfrom(cin) &gt; 0 )
+    cout &lt;&lt; "The square root of 2 * " &lt;&lt; x &lt;&lt; " + 1 is " 
+         &lt;&lt; sqrt(2 * x + 1) &lt;&lt; endl;
+</PRE>
+<P>
+which is much more compact and easier to understand.
+</P>
+<P>
+The use of the C++ wrapper requires however a recent
+and ANSI-compliant C++ compiler (for instance g++ 3.x).
+Moreover, before declaring or defining variables of <CODE>xreal</CODE>
+type and before using anyone of the functions or operators 
+declared in the header file <CODE>xreal.h</CODE>, you have to insert the line
+</P>
+<PRE>
+  #include &lt;xreal.h&gt;
+</PRE>
+<P>
+in your source code file.
+</P>
+<P>
+Similarly, before declaring or defining variables of <CODE>xcomplex</CODE>
+type and before using anyone of the functions or operators
+declared in the header file <CODE>xcomplex.h</CODE>, you have to add the line
+</P>
+<PRE>
+  #include &lt;xcomplex.h&gt;
+</PRE>
+<P>
+to your source code file.
+</P>
+<P>
+After that, it is recommendable to add the directive
+</P>
+<PRE>
+  using namespace HPA;
+</PRE>
+<P>
+since all objects of the C++ wrapper are declared
+or defined within the namespace <CODE>HPA</CODE>.
+Alternatively, you should always use the prefix
+<CODE>HPA::</CODE> in front of any identifiers coming
+from the files <CODE>xreal.h</CODE> or <CODE>xcomplex.h</CODE>.
+One has to tell the compiler indeed, where it has to look for
+the classes <CODE>xreal</CODE>, <CODE>xcomplex</CODE> and the related stuff.
+</P>
+<P>
+This code comes from a real program:
+</P>
+<PRE>
+  #include&lt;iostream&gt;
+  #include&lt;xreal.h&gt;
+  using namespace HPA;
+  
+  int main (void)
+  {
+    xreal x;
+  
+    while ( x.getfrom(cin) &gt; 0 )
+      cout &lt;&lt; "The square root of 2 * " &lt;&lt; x &lt;&lt; " + 1 is " 
+           &lt;&lt; sqrt(2 * x + 1) &lt;&lt; endl;
+    return 0;
+  }
+</PRE>
+<P>
+The header files <CODE>xreal.h</CODE> and
+<CODE>xcomplex.h</CODE> make also directly available the standard classes
+<CODE>ostream</CODE>, <CODE>istream</CODE> and <CODE>string</CODE>
+(see <A HREF="#xreal_class">sections "The xreal class"</A>
+ and <A HREF="#xcomplex_class">"The xcomplex class"</A>). 
+</P>
+<A NAME="toc17"></A>
+<H1>10. Compiling and linking with the C++ wrapper</H1>
+<P>
+Whenever you have to compile and build a program making use
+of the C++ wrapper for the HPA library, you can do it by following
+the same instructions given in the <A HREF="#comp_link">section "Compiling and linking"</A>,
+just take care to use <CODE>hpaxxconf</CODE> in place of
+<CODE>hpaconf</CODE>, as in
+</P>
+<PRE>
+  c++ -c $(hpaxxconf -c) example.cc
+</PRE>
+<P></P>
+<PRE>
+  c++ -c `hpaxxconf -c` example.cc
+</PRE>
+<P>
+to compile the file <CODE>example.cc</CODE> and obtain the object file <CODE>example.o</CODE>,
+or in
+</P>
+<PRE>
+  c++ example.o $(hpaxxconf -l) -o example
+</PRE>
+<P></P>
+<PRE>
+  c++ example.o `hpaxxconf -l` -o example
+</PRE>
+<P>
+to do the linkage.
+If you want, you may also compile and build at the same time by using
+</P>
+<PRE>
+  c++ example.cc $(hpaxxconf -c -l) -o example
+</PRE>
+<P></P>
+<PRE>
+  c++ example.cc `hpaxxconf -c -l` -o example
+</PRE>
+<P>
+All these examples assume that you are working
+with bash or with another shell sh-compatible.
+In any case, the synopsis of <CODE>hpaxxconf</CODE> is the same of <CODE>hpaconf</CODE>.
+</P>
+<P>
+<I>Warning:</I>
+The command <CODE>hpaxxconf</CODE> is available only if
+the C++ wrapper was also built when the HPA library was installed on 
+the system where you are working.
+It is possible to install the HPA library without
+its C++ wrapper. In this case, if you try to launch
+the command <CODE>hpaxxconf</CODE>, the shell will print
+the error message <CODE>"Command not found"</CODE> or
+something similar.
+</P>
+<A NAME="xreal_class"></A>
+<H1>11. The xreal class</H1>
+<P>
+The interface of the <CODE>xreal</CODE> class is
+contained in the header file <CODE>xreal.h</CODE>,
+whose contents you can find here together
+with the necessary explanations.
+</P>
+<PRE>
+  #ifndef _XREAL_H_
+  #define _XREAL_H_
+  
+  #include &lt;xpre.h&gt;
+  #include &lt;iostream&gt;
+  #include &lt;string&gt;
+  #include &lt;cstdlib&gt;
+  
+  using std::ostream;
+  using std::istream;
+  using std::string;
+  
+  namespace HPA {
+  
+  class xreal {
+    // &lt;&lt; and &gt;&gt; are used respectively for the output and the 
+    // input of extended precision numbers.
+    // The input operator &gt;&gt; reads a double precision
+    // number and then converts it to an extended precision 
+    // number. This can have undesirable rounding effects. 
+    // To avoid them, use the input function
+    // xreal::getfrom() (see below).
+    friend ostream&amp; operator&lt;&lt; (ostream&amp; os, const xreal&amp; x);
+    friend istream&amp; operator&gt;&gt; (istream&amp; is, xreal&amp; x);
+  
+    // +, -, *, / are the usual arithmetic operators
+    friend xreal operator+ (const xreal&amp; x1, const xreal&amp; x2);
+    friend xreal operator- (const xreal&amp; x1, const xreal&amp; x2);
+    friend xreal operator* (const xreal&amp; x1, const xreal&amp; x2);
+    friend xreal operator/ (const xreal&amp; x1, const xreal&amp; x2);
+  
+    // x % n is equal to x * pow (2,n)
+    friend xreal operator% (const xreal&amp; x1, int n);
+  
+    // ==, !=, &lt;=, &gt;=, &lt;, &gt; are the usual comparison operators
+    friend int operator== (const xreal&amp; x1, const xreal&amp; x2);
+    friend int operator!= (const xreal&amp; x1, const xreal&amp; x2);
+    friend int operator&lt;= (const xreal&amp; x1, const xreal&amp; x2);
+    friend int operator&gt;= (const xreal&amp; x1, const xreal&amp; x2);
+    friend int operator&lt; (const xreal&amp; x1, const xreal&amp; x2);
+    friend int operator&gt; (const xreal&amp; x1, const xreal&amp; x2);
+  
+    // sget (s, n, x) tries to read an extended precision
+    // number from the string 's' starting from the position
+    // 'n'. The retrieved number is converted and stored in
+    // 'x'. The return value is the number of characters 
+    // composing the decimal representation of this number
+    // as read from 's'. For example, if s == "12.34dog" and
+    // n == 0, then  'x'  is set to 12.34 and the return value
+    // is 5.
+    // If the portion of 's' starting from the position 'n'
+    // can not be converted to a number, then 'x' is set to
+    // xNAN and 0 is returned.
+    // If the exactly converted value would cause overflow, 
+    // then xINF or x_INF is returned, according to the sign
+    // of the value.
+    // If 'n' is greater or equal to the length of 's', then 0
+    // is returned and 'x' is set to xZERO.
+    friend unsigned long sget (string s, unsigned long startptr,
+                               xreal&amp; x);
+  
+    // bget (buff, x) tries to read an extended precision
+    // number from the buffer pointed to by 'buff'. 
+    // The retrieved number is converted and stored in 'x'.
+    // The return value is a pointer to the character after
+    // the last character used in the conversion.
+    // For example, if 'buff' is a pointer to the buffer
+    // "12.34dog", then 'x' is set to 12.34 and the return 
+    // value is a pointer to "dog" (i.e., a pointer
+    // to the character 'd').
+    // If the initial portion of the string pointed to by 'buff'
+    // can not be converted to a number, then 'x' is set to xNAN
+    // and 'buff' is returned.
+    // If the exactly converted value would cause overflow, 
+    // then xINF or x_INF is returned, according to the sign 
+    // of the value.
+    // If 'buff' is NULL (0), then an error message is printed
+    // on 'cerr' (standard error device).
+    friend const char* bget (const char* buff, xreal&amp; x);
+  
+    // compare (x1, x2) returns
+    //+1 to mean x1 &gt;  x2
+    // 0 to mean x1 == x2
+    //-1 to mean x1 &lt;  x2
+    friend int compare (const xreal&amp; x1, const xreal&amp; x2);
+  
+    //isNaN (x) returns 1 when x == xNAN, else 0
+    friend int isNaN (const xreal&amp; x);
+  
+    // The following functions do not need a particular comment:
+    // each of them is defined as the corresponding function
+    // of the standard math library, that is to say the function
+    // from &lt;cmath&gt; having the same name.
+    // However qfmod(), sfmod(), frac() and fix() do not have
+    // counterparts in the standard math library. 
+    // With respect to fmod(), qfmod() requires one more
+    // argument, where the quotient of the division of
+    // the first argument by the second one is stored.
+    // sfmod (x,&amp;n) stores in the integer variable
+    // 'n' the integer part of 'x' and, at the same time,
+    // returns the fractional part of 'x'. 
+    // The usage of sfmod() is strongly discouraged.
+    // frac() returns the fractional part of its argument.  
+    // Finally, fix() is a frontend to the xfix() 
+    // function (see section "Extended Precision Floating
+    // Point Arithmetic").
+    friend xreal abs (const xreal&amp; s);
+    friend xreal frexp (const xreal&amp; s, int *p);
+    friend xreal qfmod (const xreal&amp; s, const xreal&amp; t, xreal&amp; q);
+    friend xreal fmod (const xreal&amp; s, const xreal&amp; t);
+    friend xreal sfmod (const xreal&amp; s, int *p);
+    friend xreal frac (const xreal&amp; x);
+    friend xreal trunc (const xreal&amp; x);
+    friend xreal round (const xreal&amp; x);
+    friend xreal ceil (const xreal&amp; x);
+    friend xreal floor (const xreal&amp; x);
+    friend xreal fix (const xreal&amp; x);
+    friend xreal tan (const xreal&amp; x);
+    friend xreal sin (const xreal&amp; x);
+    friend xreal cos (const xreal&amp; x);
+    friend xreal atan (const xreal&amp; a);
+    friend xreal atan2 (const xreal&amp; y, const xreal&amp; x);
+    friend xreal asin (const xreal&amp; a);
+    friend xreal acos (const xreal&amp; a);
+    friend xreal sqrt (const xreal&amp; u);
+    friend xreal exp (const xreal&amp; u);
+    friend xreal exp2 (const xreal&amp; u);
+    friend xreal exp10 (const xreal&amp; u);
+    friend xreal log (const xreal&amp; u);
+    friend xreal log2 (const xreal&amp; u);
+    friend xreal log10 (const xreal&amp; u);
+    friend xreal tanh (const xreal&amp; v);
+    friend xreal sinh (const xreal&amp; v);
+    friend xreal cosh (const xreal&amp; v);
+    friend xreal atanh (const xreal&amp; v);
+    friend xreal asinh (const xreal&amp; v);
+    friend xreal acosh (const xreal&amp; v);
+    friend xreal pow (const xreal&amp; x, const xreal&amp; y);
+    
+   public:
+    // Various constructors. They allow to define
+    // an extended precision number in several ways.
+    // In addition, they allow for conversions from other
+    // numeric types.
+    xreal (const struct xpr* px = &amp;xZero);
+    xreal (struct xpr x);
+    xreal (double x);
+    xreal (float x);
+    xreal (int n);
+    xreal (long n);
+    xreal (unsigned int u);
+    xreal (unsigned long u);
+  
+    // This constructor requires a special comment. If
+    // only the first argument is present, the initial portion
+    // of the string pointed to by this argument is converted
+    // into an extended precision number, if a conversion is
+    // possible. If no conversion is possible, then the 
+    // returned number is xNAN. If the second argument is
+    // present and is not null, it must be the address of a 
+    // valid pointer to 'char'.
+    // Before returning, the constructor will set this pointer
+    // so that it points to the character of the string 'str' after the last 
+    // character used in the conversion.
+    xreal (const char* str, char** endptr = 0);
+    xreal (string str);
+    xreal (const xreal&amp; x);
+  
+    // Assignment operators. They do not require
+    // any explanation with the only exception of '%=',
+    // which combines a '%' operation with an assignment.
+    // So, x %= n is equivalent to x *= pow(2,n) .
+    xreal&amp; operator= (const xreal&amp; x);
+    xreal&amp; operator+= (const xreal&amp; x);
+    xreal&amp; operator-= (const xreal&amp; x);
+    xreal&amp; operator*= (const xreal&amp; x);
+    xreal&amp; operator/= (const xreal&amp; x);
+    xreal&amp; operator%= (int n);
+  
+    // Increment and decrement operators. Both prefixed
+    // and postfixed versions are defined.
+    xreal&amp; operator++ ();
+    xreal&amp; operator-- ();
+    xreal&amp; operator++ (int dummy);
+    xreal&amp; operator-- (int dummy);
+  
+    // Destructor. You will never have to recall it
+    // explicitly in your code.
+    ~xreal (void);
+  
+    // Integer exponent power. For any extended precision
+    // number 'x', x(n) is equal to 'x' raised to 'n'.
+    xreal operator() (int n) const;
+  
+    // This is the usual unary minus.
+    xreal operator-() const;
+  
+    // For any extended precision number 'x', !x evaluates to 1
+    // when 'x' is null, else it evaluates to 0.
+    int operator!() const;
+  
+    // x.isneg() returns 1 if 'x' is negative, else it 
+    // returns 0.
+    int isneg() const;
+  
+    // x.exp() returns the exponent part
+    // of the binary representation of 'x'.
+    int exp() const;
+  
+    // Functions for conversions.  x._2double(), x._2float(), 
+    // x._2xpr() and x._2string() convert the extended precision
+    // number 'x'  in a double precision number, in a single 
+    // precision number, in a structure of
+    // type 'xpr', and in a string, respectively.
+    double _2double () const;
+    float _2float() const;
+    struct xpr _2xpr() const;
+    string _2string() const;
+  
+    // The member function xreal::getfrom() can be used to 
+    // recover an extended precision number from an input 
+    // stream. The input stream is passed as argument to the
+    // function. 
+    // The return value is 0 in case of input error (in case
+    // of End-Of-File, for example). 
+    // When it starts to process its input, this function drops
+    // all the eventual leading white spaces.
+    // After reading the first non space character, it 
+    // continues to read from the input stream until it finds
+    // a white space or reaches the End-Of-File. 
+    // Then it tries to convert into an extended
+    // precision number the (initial portion of the) string just
+    // read.
+    // If no conversion can be performed, then  x.getfrom(is)
+    // sets 'x' to the value xNAN.
+    // If the exactly converted value would cause overflow,
+    // then 'x' is set to xINF or x_INF, according to the sign
+    // of the correct value.
+    int getfrom (istream&amp; is);
+  
+    // The member function xreal::print() can be used to write
+    // an extended precision number to an output stream.
+    // The output stream is passed to the function as first 
+    // argument. The next three arguments have the same meanings
+    // of the fields 'notat', 'sf' and 'lim' of the
+    // structure 'xoutflags', respectively (see section "Real Arithmetic").
+    int print (ostream&amp; os, int sc_not, int sign, int lim) const;
+  
+    // The function call  x.asprint(sc_not, sign, lim)  returns
+    // a buffer of characters with the representation, in form 
+    // of a decimal ASCII string, of the extended precision 
+    // number 'x'. The arguments 'sc_not', 'sign' and 'lim' are
+    // used to format the string.
+    // They have the same meanings of the fields 'notat', 'sf'
+    // and 'lim' of the structure 'xoutflags', respectively (see section 
+    // "Real Arithmetic").
+    // The buffer returned by this function is malloc'ed inside
+    // the function. In case of insufficient memory, the null 
+    // pointer is returned.
+    char* asprint (int sc_not, int sign, int lim) const;
+  
+    // The following static functions are used to set
+    // or get the values of the fields of the structure
+    // 'xreal::ioflags'. This structure is a static member
+    // variable of the class 'xreal' and it is used by the
+    // output operator &lt;&lt; to know how to format its second
+    // argument. The meaning of the fields of the structure
+    // 'xreal::ioflags' is explained in the section 
+    // "Real arithmetic".
+  
+    // xreal::set_notation (which) sets to 'which' the value
+    // of 'xreal::ioflags.notat' .
+    static void set_notation (short notat);
+  
+    // xreal::set_signflag (which) sets to 'which' the value
+    // of 'xreal::ioflags.sf' .
+    static void set_signflag (short onoff);
+  
+    // xreal::set_mfwd (which) sets to 'which' the value
+    // of 'xreal::ioflags.mfwd' .
+    static void set_mfwd (short wd);
+  
+    // xreal::set_lim (which) sets to 'which' the value
+    // of 'xreal::ioflags.lim' .
+    static void set_lim (short lim);
+  
+    // xreal::set_padding (which) sets to 'which' the value
+    // of 'xreal::ioflags.padding' .
+    static void set_padding (signed char ch);
+  
+    // xreal::get_notation () returns the current value
+    // of 'xreal::ioflags.notat' .
+    static short get_notation (void);
+  
+    // xreal::get_signflag () returns the current value
+    // of 'xreal::ioflags.sf' .
+    static short get_signflag (void);
+  
+    // xreal::get_mfwd () returns the current value
+    // of 'xreal::ioflags.mfwd' .
+    static short get_mfwd (void);
+  
+    // xreal::get_lim () returns the current value
+    // of 'xreal::ioflags.lim' .
+    static short get_lim (void);
+  
+    // xreal::get_padding () returns the current value
+    // of 'xreal::ioflags.padding' .
+    static signed char get_padding (void);
+   private:
+    struct xpr br; /* binary representation */
+    static struct xoutflags ioflags; /* output flags */
+  };
+  
+   // xmatherrcode() returns the current value of the global
+   // variable 'xErrNo' (see section 
+   // "Dealing with runtime errors"), if
+   // this variable is defined. 
+   // Otherwise xmatherrcode() returns -1. 
+   int xmatherrcode ();
+  
+   // clear_xmatherr() resets to 0 the value of the global
+   // variable 'xErrNo' (see section "Dealing with runtime
+   // errors"), if this variable is defined. 
+   // Otherwise, clear_xmatherr() prints a suitable warning
+   // on 'cerr' (standard error device).
+   void clear_xmatherr ();
+  
+   // Some useful constants:
+   // xZERO    ==  0
+   // xONE     ==  1
+   // xTWO     ==  2
+   // xTEN     == 10
+   // xINF     == +INF
+   // x_INF    == -INF
+   // xNAN     == Not-A-Number
+   // xPI      == Pi Greek
+   // xPI2     == Pi / 2
+   // xPI4     == Pi / 4
+   // xEE      == e (base of natural logarithms)
+   // xSQRT2   == square root of 2
+   // xLN2     == natural logarithm of 2
+   // xLN10    == natural logarithm of 10
+   // xLOG2_E  == base-2 logarithm of e
+   // xLOG2_10 == base-2 logarithm of 10 
+   // xLOG10_E == base-10 logarithm of e
+   extern const xreal xZERO, xONE, xTWO, xTEN;
+   extern const xreal xINF, x_INF, xNAN;
+   extern const xreal xPI, xPI2, xPI4, xEE, xSQRT2;
+   extern const xreal xLN2, xLN10, xLOG2_E, xLOG2_10, xLOG10_E;
+  
+  } /* End namespace HPA */
+  
+  #endif /* _XREAL_H_ */
+</PRE>
+<A NAME="xcomplex_class"></A>
+<H1>12. The xcomplex class</H1>
+<P>
+The interface of the <CODE>xcomplex</CODE> class is
+contained in the header file <CODE>xcomplex.h</CODE>,
+whose contents you can find here together
+with the necessary explanations.
+</P>
+<PRE>
+  #ifndef _XCOMPLEX_H_
+  #define _XCOMPLEX_H_
+  
+  #include &lt;cxpre.h&gt;
+  #include &lt;iostream&gt;
+  #include &lt;string&gt;
+  #include "xreal.h"
+  
+  using std::istream;
+  using std::ostream;
+  using std::string;
+  
+  namespace HPA {
+  
+    struct double_complex {
+      double re, im;
+    };
+  
+    struct float_complex {
+      float re, im;
+    };
+  
+  class xcomplex {
+    // &lt;&lt; and &gt;&gt; are used respectively for the output and the
+    // input of extended precision complex numbers.
+    // The input operator &gt;&gt; reads a couple of double
+    // precision numbers and then converts it into
+    // an extended precision complex number. This can have 
+    // undesirable rounding effects. To avoid them, use the
+    // input function xcomplex::getfrom() (see below).
+    friend ostream&amp; operator&lt;&lt; (ostream&amp; os, const xcomplex&amp; z);
+    friend istream&amp; operator&gt;&gt; (istream&amp; is, xcomplex&amp; z);
+  
+    // +, -, *, / are the usual arithmetic operators
+    friend xcomplex
+      operator+ (const xcomplex&amp; z1, const xcomplex&amp; z2);
+    friend xcomplex
+      operator- (const xcomplex&amp; z1, const xcomplex&amp; z2);
+    friend xcomplex 
+      operator* (const xcomplex&amp; z1, const xcomplex&amp; z2);
+    friend xcomplex
+      operator/ (const xcomplex&amp; z1, const xcomplex&amp; z2);
+  
+    // z % n is equal to z * pow (2,n)
+    friend xcomplex
+      operator% (const xcomplex&amp; z, int n);
+  
+    // ==, !=, &lt;=, &gt;=, &lt;, &gt; are the usual comparison operators
+    friend int
+      operator== (const xcomplex&amp; z1, const xcomplex&amp; z2);
+    friend int
+      operator!= (const xcomplex&amp; z1, const xcomplex&amp; z2);
+    friend int
+      operator&lt;= (const xcomplex&amp; z1, const xcomplex&amp; z2);
+    friend int
+      operator&gt;= (const xcomplex&amp; z1, const xcomplex&amp; z2);
+    friend int
+      operator&lt; (const xcomplex&amp; z1, const xcomplex&amp; z2);
+    friend int
+      operator&gt; (const xcomplex&amp; z1, const xcomplex&amp; z2);
+  
+    // sget (s, n, z) tries to read an extended precision
+    // complex number from the string 's' starting from the
+    // position 'n'. The retrieved number is converted and
+    // stored in 'z'. The return value is the number of
+    // characters composing the decimal representation of this
+    // number as read from 's'. 
+    // For example, if s == "12.34+6.7idog" and n == 0,
+    // then  'z'  is set to  12.34+6.7i  and the return value
+    // is 10.
+    // If the portion of 's' starting from the position 'n' can
+    // not be converted to a number, then 'z' is set to 
+    // xNAN + xNANi and 0 is returned.
+    // If the exactly converted value would cause overflow in
+    // the real or/and imaginary part, then the real or/and the
+    // imaginary part of 'z' are set to xINF or x_INF, according
+    // to the signs of the correct value.
+    // If 'n' is greater or equal to the length of 's', then 0
+    // is returned and 'z' is set to cxZERO.
+    friend unsigned long sget (string s, unsigned long startptr,
+                               xcomplex&amp; z);
+  
+    // bget (buff, z) tries to read an extended precision
+    // complex number from the buffer pointed to by 'buff'. 
+    // The retrieved number is converted and stored in 'z'. 
+    // The return value is a pointer to the character after
+    // the last character used in the conversion.
+    // For example, if 'buff' is a pointer to the buffer 
+    // "12.34+6.7idog", then 'z' is set to  12.34+6.7i  and 
+    // the return value is a pointer to "dog" (i.e.,
+    // a pointer to the character 'd').
+    // If the initial portion of the string pointed to by 'buff'
+    // can not be converted to a number, then 'z' is set to 
+    // xNAN + xNANi and 'buff' is returned.
+    // If the exactly converted value would cause overflow
+    // in the real or/and imaginary part, then the real or/and
+    // the imaginary part of 'z' are set to xINF or x_INF, 
+    // according to the signs of the correct value.
+    // If 'buff' is NULL (0), then an error message is printed
+    // on 'cerr' (standard error device).
+    friend const char* bget (const char* buff, xcomplex&amp; z);
+  
+    // rmul (x,z) (here 'x' is a real number) returns the
+    // product x * z.
+    // It is faster than the * operator.
+    friend xcomplex rmul (const xreal&amp; x, const xcomplex&amp; z);
+  
+    // After eventually rounding 'z1' and 'z2' by recalling
+    // round() (see below) on them, gdiv(z1, z2) returns
+    // the quotient of the gaussian division of 'z1' by 'z2'.
+    // If you do not know what gaussian division means, probably
+    // you will never need this function :)
+    friend xcomplex
+      gdiv (const xcomplex&amp; z1, const xcomplex&amp; z2);
+    
+    // After eventually rounding 'z1' and 'z2' by recalling
+    // round() (see below) on them, gmod(z1, z2) returns
+    // the remainder of the gaussian division of 'z1' by 'z2'.
+    // If you do not know what gaussian division means, probably
+    // you will never need this function :)
+    friend xcomplex 
+      gmod (const xcomplex&amp; z1, const xcomplex&amp; z2);
+  
+    // idiv() is a wrapper to cxidiv() (see section 
+    // "Extended Precision Complex Arithmetic").
+    friend xcomplex 
+      idiv (const xcomplex&amp; z1, const xcomplex&amp; z2);
+  
+    // mod() is a wrapper to cxmod() (see section 
+    // "Extended Precision Complex Arithmetic").
+    friend xcomplex 
+      mod (const xcomplex&amp; z1, const xcomplex&amp; z2);
+  
+    // conj() returns the complex conjugate of its argument.
+    friend xcomplex conj (const xcomplex&amp; z);
+  
+    // inv() returns the complex reciprocal of its argument:
+    // inv(z) == 1/z .
+    friend xcomplex inv  (const xcomplex&amp; z);
+  
+    // swap(z) returns the complex number {z.im, z.re}.
+    friend xcomplex swap (const xcomplex&amp; z);
+  
+    // Multiplication by 1i (imaginary unit). 
+    friend xcomplex drot (const xcomplex&amp; z);
+  
+    // Multiplication by -1i
+    friend xcomplex rrot (const xcomplex&amp; z);
+  
+    // abs() returns the absolute value (or modulus) of its
+    // argument.
+    // The return value of abs() is then an 'xreal' number.
+    friend xreal abs (const xcomplex&amp; z);
+  
+    // arg(z) returns the phase angle (or argument)
+    // of the complex number 'z'.
+    // The return value of arg() is an 'xreal' number
+    // in the range [-xPI, xPI) (-xPI is included, xPI is excluded).
+    // If 'z' is null, then a domain-error is produced.
+    friend xreal arg (const xcomplex&amp; z);
+  
+    // The next six functions have the same
+    // meanings of the corresponding real functions,
+    // but they affect both the real
+    // and the imaginary part of their argument.
+    friend xcomplex frac (const xcomplex&amp; z);
+    friend xcomplex trunc (const xcomplex&amp; z);
+    friend xcomplex round (const xcomplex&amp; z);
+    friend xcomplex ceil (const xcomplex&amp; z);
+    friend xcomplex floor (const xcomplex&amp; z);
+    friend xcomplex fix (const xcomplex&amp; z);
+  
+    // sqr() returns the square of its argument.
+    friend xcomplex sqr (const xcomplex&amp; z);
+  
+    // sqrt() returns the principal branch of the square root
+    // of its argument.
+    friend xcomplex sqrt (const xcomplex&amp; z);
+  
+    // root (z,i,n) returns the 'i'th branch of the 'n'th root
+    // of 'z'. If 'n' is zero or negative and 'z' is
+    // zero, then a bad-exponent error is produced.
+    friend xcomplex root (const xcomplex&amp; z, int i, int n);
+  
+    // These functions do not require any comment, except that
+    // tan() and tanh() yield a domain-error in the same cases
+    // as cxtan() and cxtanh(), respectively.
+    friend xcomplex exp (const xcomplex&amp; z);
+    friend xcomplex exp2 (const xcomplex&amp; z);
+    friend xcomplex exp10 (const xcomplex&amp; z);
+    friend xcomplex tan (const xcomplex&amp; z);
+    friend xcomplex sin (const xcomplex&amp; z);
+    friend xcomplex cos (const xcomplex&amp; z);
+    friend xcomplex tanh (const xcomplex&amp; z);
+    friend xcomplex sinh (const xcomplex&amp; z);
+    friend xcomplex cosh (const xcomplex&amp; z);
+  
+    // Natural, base-2 and base-10 logarithm of a complex 
+    // number.
+    // A null argument results in a domain-error.
+    // The imaginary part of the return value of log() is always
+    // in the interval [-xPI,xPI) (-xPI is included, xPI is excluded).
+    friend xcomplex log (const xcomplex&amp; z);
+    friend xcomplex log2 (const xcomplex&amp; z);
+    friend xcomplex log10 (const xcomplex&amp; z);
+    
+    // log_sqrt(z) returns the natural logarithm of the
+    // principal branch of the square root of 'z'.
+    // A null argument results in a domain-error.
+    // The imaginary part of the return value of log_sqrt()
+    // is always in the interval [-xPI2,xPI2) (-xPI2 is included, xPI2 is excluded).
+    friend xcomplex log_sqrt (const xcomplex&amp; z);
+    
+    // These functions are self-explanatory. atan(z)
+    // yields a domain-error if the real part of 'z' is null and
+    // the imaginary part is equal to '+1' or '-1'.
+    // Similarly, atanh(z) yields a domain-error if the 
+    // imaginary part of 'z' is null and the
+    // real part is equal to '+1' or '-1'.
+    friend xcomplex atan (const xcomplex&amp; z);
+    friend xcomplex asin (const xcomplex&amp; z);
+    friend xcomplex acos (const xcomplex&amp; z);
+    friend xcomplex atanh (const xcomplex&amp; z);
+    friend xcomplex asinh (const xcomplex&amp; z);
+    friend xcomplex acosh (const xcomplex&amp; z);
+  
+    // The return value of pow() is the power of the first
+    // argument raised to the second one.
+    // Note that the modulus of the first argument must be
+    // greater than zero, if the real part of
+    // the second argument is less or equal than zero, otherwise
+    // a bad-exponent error is produced.
+    friend xcomplex pow (const xcomplex&amp; z1, const xcomplex&amp; z2);
+    
+   public:
+    // Various constructors. They allow to define
+    // an extended precision complex number in several ways.
+    // In addition, they allow for conversions from other
+    // numeric types.
+    xcomplex (const struct cxpr* pz = &amp;cxZero);
+    xcomplex (struct cxpr z);
+    xcomplex (struct xpr x, struct xpr y = xZero);
+    xcomplex (xreal x, xreal y = xZERO);
+    xcomplex (double x, double y = 0.0);
+    xcomplex (float x, float y = 0.0);
+    xcomplex (int m, int n = 0);
+    xcomplex (long m, long n = 0);
+    xcomplex (unsigned int u, unsigned int v = 0U);
+    xcomplex (unsigned long u, unsigned long v = 0U);
+    
+    // This constructor requires a special comment. If
+    // only the first argument is present, the initial portion
+    // of the string pointed to by this argument is converted
+    // into an extended precision complex number, if a 
+    // conversion is possible. If no conversion is possible,
+    // then the returned number is xNAN + xNANi. 
+    // If the second argument is present and is not null,
+    // it must be the address of a valid pointer to 'char'.
+    // Before returning, the constructor will set this pointer
+    // so that it points to the character after the last 
+    // character used in the conversion.
+    xcomplex (const char* str, char** endptr = 0);
+  
+    xcomplex (string str);
+    xcomplex (const xcomplex&amp; z);
+  
+    // Assignment operators. They do not require
+    // any explanation with the only exception of '%=',
+    // which combines a '%' operation with an assignment.
+    // So, x %= n is equivalent to x *= pow(2,n) .
+    xcomplex&amp; operator= (const xcomplex&amp; z);
+    xcomplex&amp; operator+= (const xcomplex&amp; z);
+    xcomplex&amp; operator-= (const xcomplex&amp; z);
+    xcomplex&amp; operator*= (const xcomplex&amp; z);
+    xcomplex&amp; operator*= (const xreal&amp; x);
+    xcomplex&amp; operator/= (const xcomplex&amp; z);
+    xcomplex&amp; operator%= (int n);
+  
+    // Increment and decrement operators. Both prefixed
+    // and postfixed versions are defined. These operators
+    // only act on the real part of their argument.
+    xcomplex&amp; operator++ ();
+    xcomplex&amp; operator-- ();
+    xcomplex&amp; operator++ (int dummy);
+    xcomplex&amp; operator-- (int dummy);
+  
+    // Destructor. You will never have to recall it
+    // explicitly in your code.
+    ~xcomplex (void);
+  
+    // Integer exponent power. For any extended precision
+    // complex number 'z', z(n) is equal to 'z' raised to 'n'.
+    xcomplex operator() (int n) const;
+  
+    // This is the usual unary minus.
+    xcomplex operator-() const;
+  
+    // For any extended precision complex number 'z', 
+    // !z evaluates to 1 when
+    // 'z' is null, else it evaluates to 0.
+    int operator!() const;
+  
+    // Functions for conversions. z._2dcomplex(), z._2fcomplex(),
+    // z._2cxpr() and z._2string() convert the extended
+    // precision complex number 'z' in a double precision
+    // complex number, in a single precision complex 
+    // number, in a structure of type 'cxpr', and in a
+    // string, respectively.
+    double_complex _2dcomplex () const;
+    float_complex _2fcomplex() const;
+    struct cxpr _2cxpr() const;
+    string _2string() const;
+  
+    // For any extended precision complex number 'z',
+    // z.real() and z.imag() return, respectively, the
+    // real and the imaginary part of 'z' in the form
+    // of an extended precision number.
+    xreal real () const;
+    xreal imag () const;
+  
+    // For any extended precision complex number 'z',
+    // z._real() and z._imag() return, respectively, the
+    // real and the imaginary part of 'z' in the form
+    // of a structure of 'xpr' type.
+    struct xpr _real () const;
+    struct xpr _imag () const;
+  
+    // For any extended precision complex number 'z',
+    // z.dreal() and z.dimag() return, respectively, the
+    // real and the imaginary part of 'z' in the form
+    // of a double precision number.
+    double dreal () const;
+    double dimag () const;
+  
+    // For any extended precision complex number 'z',
+    // z.freal() and z.fimag() return, respectively, the
+    // real and the imaginary part of 'z' in the form
+    // of a single precision number.
+    double freal () const;
+    double fimag () const;
+  
+    // For any extended precision complex number 'z',
+    // z.sreal() and z.simag() return, respectively, the
+    // real and the imaginary part of 'z' in the form
+    // of a string.
+    string sreal () const;
+    string simag () const;
+    
+    // The next functions allow to set (or reset)
+    // the real and the imaginary part of a complex number.
+    void real (const xreal&amp; x);
+    void imag (const xreal&amp; x);
+    void real (struct xpr x);
+    void imag (struct xpr x);
+    void real (const struct xpr* px);
+    void imag (const struct xpr* px);
+    void real (double x);
+    void imag (double x);
+    void real (float x);
+    void imag (float x);
+    void real (int n);
+    void imag (int n);
+    void real (long n);
+    void imag (long n);
+    void real (unsigned int u);
+    void imag (unsigned int u);
+    void real (unsigned long u);
+    void imag (unsigned long u);
+    void real (const char* str, char** endptr = 0);
+    void imag (const char* str, char** endptr = 0);
+    void real (string str);
+    void imag (string str);
+    
+    // The member function xcomplex::getfrom() can be used
+    // to recover an extended precision complex number from an 
+    // input stream. The input stream is passed as argument to
+    // the function.
+    // The return value is 0 in case of input error (in case of 
+    // End-Of-File, for example). 
+    // When it starts to process its input, this function drops
+    // all eventual leading white spaces.
+    // After reading the first non space character, it continues
+    // to read from the input stream until it finds a white 
+    // space or reaches the End-Of-File. 
+    // Then it tries to convert into an extended
+    // precision complex number the (initial portion of the) 
+    // string which has just been read from the input stream.
+    // If no conversion can be performed, then  z.getfrom(is)
+    // sets 'z' to the value xNAN + xNANi.
+    // If the exactly converted value would cause overflow in
+    // the real or/and in the imaginary part, then the real part
+    // or/and the imaginary part of 'z' are set to xINF or x_INF, 
+    // according to the signs of the correct value.
+    int getfrom (istream&amp; is);
+  
+    // The member function xcomplex::print() can be used to
+    // write an extended precision complex number to an output
+    // stream. The output stream is passed to the function as 
+    // first argument. The next three arguments have the same 
+    // meanings of the fields 'notat', 'sf'
+    // and 'lim' of the structure 'xoutflags', respectively (see section 
+    // "Real Arithmetic").
+    int print (ostream&amp; os, int sc_not, int sign, int lim) const;
+  
+    // The function call  z.asprint(sc_not, sign, lim)  returns
+    // a buffer of characters with the representation, 
+    // in form of a decimal ASCII string,
+    // of the extended precision complex number 'z'. 
+    // The arguments 'sc_not', 'sign' and 'lim' are used 
+    // to format the string.
+    // They have the same meanings of the fields 'notat', 'sf'
+    // and 'lim' of the structure 'xoutflags', respectively (see section 
+    // "Real Arithmetic").
+    // The buffer returned by this function is malloc'ed inside
+    // the function. In case of insufficient memory, the null 
+    // pointer is returned.
+    char* asprint (int sc_not, int sign, int lim) const;
+  
+    // The following static functions are used to set
+    // or get the values of the fields of the structure
+    // 'xcomplex::ioflags'. This structure is a static member
+    // variable of the class 'xcomplex' and it is used by 
+    // the output operator &lt;&lt; to know how to format its second
+    // argument. The meaning of the
+    // fields of the structure 'xcomplex::ioflags' is explained
+    // in the section "Real arithmetic".
+  
+    // xcomplex::set_fmt (which) sets to 'which' the value
+    // of 'xcomplex::ioflags.fmt' .
+    static void set_fmt (short format);
+  
+    // xcomplex::set_notation (which) sets to 'which' the value
+    // of 'xcomplex::ioflags.notat' .
+    static void set_notation (short notat);
+  
+    // xcomplex::set_signflag (which) sets to 'which' the value
+    // of 'xcomplex::ioflags.sf' .
+    static void set_signflag (short onoff);
+  
+    // xcomplex::set_mfwd (which) sets to 'which' the value
+    // of 'xcomplex::ioflags.mfwd' .
+    static void set_mfwd (short wd);
+  
+    // xcomplex::set_lim (which) sets to 'which' the value
+    // of 'xcomplex::ioflags.lim' .
+    static void set_lim (short lim);
+  
+    // xcomplex::set_padding (which) sets to 'which' the value
+    // of 'xcomplex::ioflags.padding' .
+    static void set_padding (signed char ch);
+  
+    // xcomplex::set_ldelim (ch) sets to 'ch' the value
+    // of 'xcomplex::ioflags.ldel' .
+    static void set_ldelim (signed char ch);
+  
+    // xcomplex::set_rdelim (ch) sets to 'ch' the value
+    // of 'xcomplex::ioflags.rdel' .
+    static void set_rdelim (signed char ch);
+  
+    // xcomplex::get_fmt () returns the current value
+    // of 'xcomplex::ioflags.fmt' .
+    static short get_fmt (void);
+  
+    // xcomplex::get_notation () returns the current value
+    // of 'xcomplex::ioflags.notat' .
+    static short get_notation (void);
+  
+    // xcomplex::get_signflag () returns the current value
+    // of 'xcomplex::ioflags.sf' .
+    static short get_signflag (void);
+  
+    // xcomplex::get_mfwd () returns the current value
+    // of 'xcomplex::ioflags.mfwd' .
+    static short get_mfwd (void);
+  
+    // xcomplex::get_lim () returns the current value
+    // of 'xcomplex::ioflags.lim' .
+    static short get_lim (void);
+  
+    // xcomplex::get_padding () returns the current value
+    // of 'xcomplex::ioflags.padding' .
+    static signed char get_padding (void);
+  
+    // xcomplex::get_ldelim () returns the current value
+    // of 'xcomplex::ioflags.ldel' .
+    static signed char get_ldelim (void);
+  
+    // xcomplex::get_rdelim () returns the current value
+    // of 'xcomplex::ioflags.rdel' .
+    static signed char get_rdelim (void);
+   private:
+    struct cxpr br; /* binary representation */
+    static struct xoutflags ioflags; /* output flags */
+  };
+  
+   // Some useful constants:
+   // cxZERO    ==  0
+   // cxONE     ==  1
+   // cxI       ==  1i 
+  extern const xcomplex cxZERO, cxONE, cxI;
+  
+  } /* End namespace HPA */
+  
+  #define xi cxI
+  #define xj cxI
+  #define _i cxI
+  #define _j cxI
+  
+  #endif /* _XCOMPLEX_H_ */
+</PRE>
+<A NAME="toc20"></A>
+<H1>13. Acknowledgments</H1>
+<P>
+A big thanks to Daniel A. Atkinson,
+since without his work the HPA library would not exist.
+I have also to thank Aurelio Marinho Jargas 
+&lt;verde (at) aurelio (dot) net&gt;, author of txt2tags 
+(<A HREF="http://txt2tags.sf.net">http://txt2tags.sf.net</A>), a free (GPL'ed) and wonderful
+text formatting and conversion tool, 
+which I used extensively in writing this manual
+and the web page of the HPA library.
+</P>
+<P>
+Last but not least, I want to thank all the
+people till now involved in the Free Software
+community, starting from those ones directly involved
+in the GNU project (<A HREF="http://www.gnu.org">http://www.gnu.org</A>).
+</P>
+<A NAME="GNUFDL"></A>
+<H1>14. GNU Free Documentation License</H1>
+<PRE>
+  
+                  GNU Free Documentation License
+                   Version 1.3, 3 November 2008
+  
+  
+   Copyright (C) 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
+       &lt;http://fsf.org/&gt;
+   Everyone is permitted to copy and distribute verbatim copies
+   of this license document, but changing it is not allowed.
+  
+  0. PREAMBLE
+  
+  The purpose of this License is to make a manual, textbook, or other
+  functional and useful document "free" in the sense of freedom: to
+  assure everyone the effective freedom to copy and redistribute it,
+  with or without modifying it, either commercially or noncommercially.
+  Secondarily, this License preserves for the author and publisher a way
+  to get credit for their work, while not being considered responsible
+  for modifications made by others.
+  
+  This License is a kind of "copyleft", which means that derivative
+  works of the document must themselves be free in the same sense.  It
+  complements the GNU General Public License, which is a copyleft
+  license designed for free software.
+  
+  We have designed this License in order to use it for manuals for free
+  software, because free software needs free documentation: a free
+  program should come with manuals providing the same freedoms that the
+  software does.  But this License is not limited to software manuals;
+  it can be used for any textual work, regardless of subject matter or
+  whether it is published as a printed book.  We recommend this License
+  principally for works whose purpose is instruction or reference.
+  
+  
+  1. APPLICABILITY AND DEFINITIONS
+  
+  This License applies to any manual or other work, in any medium, that
+  contains a notice placed by the copyright holder saying it can be
+  distributed under the terms of this License.  Such a notice grants a
+  world-wide, royalty-free license, unlimited in duration, to use that
+  work under the conditions stated herein.  The "Document", below,
+  refers to any such manual or work.  Any member of the public is a
+  licensee, and is addressed as "you".  You accept the license if you
+  copy, modify or distribute the work in a way requiring permission
+  under copyright law.
+  
+  A "Modified Version" of the Document means any work containing the
+  Document or a portion of it, either copied verbatim, or with
+  modifications and/or translated into another language.
+  
+  A "Secondary Section" is a named appendix or a front-matter section of
+  the Document that deals exclusively with the relationship of the
+  publishers or authors of the Document to the Document's overall
+  subject (or to related matters) and contains nothing that could fall
+  directly within that overall subject.  (Thus, if the Document is in
+  part a textbook of mathematics, a Secondary Section may not explain
+  any mathematics.)  The relationship could be a matter of historical
+  connection with the subject or with related matters, or of legal,
+  commercial, philosophical, ethical or political position regarding
+  them.
+  
+  The "Invariant Sections" are certain Secondary Sections whose titles
+  are designated, as being those of Invariant Sections, in the notice
+  that says that the Document is released under this License.  If a
+  section does not fit the above definition of Secondary then it is not
+  allowed to be designated as Invariant.  The Document may contain zero
+  Invariant Sections.  If the Document does not identify any Invariant
+  Sections then there are none.
+  
+  The "Cover Texts" are certain short passages of text that are listed,
+  as Front-Cover Texts or Back-Cover Texts, in the notice that says that
+  the Document is released under this License.  A Front-Cover Text may
+  be at most 5 words, and a Back-Cover Text may be at most 25 words.
+  
+  A "Transparent" copy of the Document means a machine-readable copy,
+  represented in a format whose specification is available to the
+  general public, that is suitable for revising the document
+  straightforwardly with generic text editors or (for images composed of
+  pixels) generic paint programs or (for drawings) some widely available
+  drawing editor, and that is suitable for input to text formatters or
+  for automatic translation to a variety of formats suitable for input
+  to text formatters.  A copy made in an otherwise Transparent file
+  format whose markup, or absence of markup, has been arranged to thwart
+  or discourage subsequent modification by readers is not Transparent.
+  An image format is not Transparent if used for any substantial amount
+  of text.  A copy that is not "Transparent" is called "Opaque".
+  
+  Examples of suitable formats for Transparent copies include plain
+  ASCII without markup, Texinfo input format, LaTeX input format, SGML
+  or XML using a publicly available DTD, and standard-conforming simple
+  HTML, PostScript or PDF designed for human modification.  Examples of
+  transparent image formats include PNG, XCF and JPG.  Opaque formats
+  include proprietary formats that can be read and edited only by
+  proprietary word processors, SGML or XML for which the DTD and/or
+  processing tools are not generally available, and the
+  machine-generated HTML, PostScript or PDF produced by some word
+  processors for output purposes only.
+  
+  The "Title Page" means, for a printed book, the title page itself,
+  plus such following pages as are needed to hold, legibly, the material
+  this License requires to appear in the title page.  For works in
+  formats which do not have any title page as such, "Title Page" means
+  the text near the most prominent appearance of the work's title,
+  preceding the beginning of the body of the text.
+  
+  The "publisher" means any person or entity that distributes copies of
+  the Document to the public.
+  
+  A section "Entitled XYZ" means a named subunit of the Document whose
+  title either is precisely XYZ or contains XYZ in parentheses following
+  text that translates XYZ in another language.  (Here XYZ stands for a
+  specific section name mentioned below, such as "Acknowledgements",
+  "Dedications", "Endorsements", or "History".)  To "Preserve the Title"
+  of such a section when you modify the Document means that it remains a
+  section "Entitled XYZ" according to this definition.
+  
+  The Document may include Warranty Disclaimers next to the notice which
+  states that this License applies to the Document.  These Warranty
+  Disclaimers are considered to be included by reference in this
+  License, but only as regards disclaiming warranties: any other
+  implication that these Warranty Disclaimers may have is void and has
+  no effect on the meaning of this License.
+  
+  2. VERBATIM COPYING
+  
+  You may copy and distribute the Document in any medium, either
+  commercially or noncommercially, provided that this License, the
+  copyright notices, and the license notice saying this License applies
+  to the Document are reproduced in all copies, and that you add no
+  other conditions whatsoever to those of this License.  You may not use
+  technical measures to obstruct or control the reading or further
+  copying of the copies you make or distribute.  However, you may accept
+  compensation in exchange for copies.  If you distribute a large enough
+  number of copies you must also follow the conditions in section 3.
+  
+  You may also lend copies, under the same conditions stated above, and
+  you may publicly display copies.
+  
+  
+  3. COPYING IN QUANTITY
+  
+  If you publish printed copies (or copies in media that commonly have
+  printed covers) of the Document, numbering more than 100, and the
+  Document's license notice requires Cover Texts, you must enclose the
+  copies in covers that carry, clearly and legibly, all these Cover
+  Texts: Front-Cover Texts on the front cover, and Back-Cover Texts on
+  the back cover.  Both covers must also clearly and legibly identify
+  you as the publisher of these copies.  The front cover must present
+  the full title with all words of the title equally prominent and
+  visible.  You may add other material on the covers in addition.
+  Copying with changes limited to the covers, as long as they preserve
+  the title of the Document and satisfy these conditions, can be treated
+  as verbatim copying in other respects.
+  
+  If the required texts for either cover are too voluminous to fit
+  legibly, you should put the first ones listed (as many as fit
+  reasonably) on the actual cover, and continue the rest onto adjacent
+  pages.
+  
+  If you publish or distribute Opaque copies of the Document numbering
+  more than 100, you must either include a machine-readable Transparent
+  copy along with each Opaque copy, or state in or with each Opaque copy
+  a computer-network location from which the general network-using
+  public has access to download using public-standard network protocols
+  a complete Transparent copy of the Document, free of added material.
+  If you use the latter option, you must take reasonably prudent steps,
+  when you begin distribution of Opaque copies in quantity, to ensure
+  that this Transparent copy will remain thus accessible at the stated
+  location until at least one year after the last time you distribute an
+  Opaque copy (directly or through your agents or retailers) of that
+  edition to the public.
+  
+  It is requested, but not required, that you contact the authors of the
+  Document well before redistributing any large number of copies, to
+  give them a chance to provide you with an updated version of the
+  Document.
+  
+  
+  4. MODIFICATIONS
+  
+  You may copy and distribute a Modified Version of the Document under
+  the conditions of sections 2 and 3 above, provided that you release
+  the Modified Version under precisely this License, with the Modified
+  Version filling the role of the Document, thus licensing distribution
+  and modification of the Modified Version to whoever possesses a copy
+  of it.  In addition, you must do these things in the Modified Version:
+  
+  A. Use in the Title Page (and on the covers, if any) a title distinct
+     from that of the Document, and from those of previous versions
+     (which should, if there were any, be listed in the History section
+     of the Document).  You may use the same title as a previous version
+     if the original publisher of that version gives permission.
+  B. List on the Title Page, as authors, one or more persons or entities
+     responsible for authorship of the modifications in the Modified
+     Version, together with at least five of the principal authors of the
+     Document (all of its principal authors, if it has fewer than five),
+     unless they release you from this requirement.
+  C. State on the Title page the name of the publisher of the
+     Modified Version, as the publisher.
+  D. Preserve all the copyright notices of the Document.
+  E. Add an appropriate copyright notice for your modifications
+     adjacent to the other copyright notices.
+  F. Include, immediately after the copyright notices, a license notice
+     giving the public permission to use the Modified Version under the
+     terms of this License, in the form shown in the Addendum below.
+  G. Preserve in that license notice the full lists of Invariant Sections
+     and required Cover Texts given in the Document's license notice.
+  H. Include an unaltered copy of this License.
+  I. Preserve the section Entitled "History", Preserve its Title, and add
+     to it an item stating at least the title, year, new authors, and
+     publisher of the Modified Version as given on the Title Page.  If
+     there is no section Entitled "History" in the Document, create one
+     stating the title, year, authors, and publisher of the Document as
+     given on its Title Page, then add an item describing the Modified
+     Version as stated in the previous sentence.
+  J. Preserve the network location, if any, given in the Document for
+     public access to a Transparent copy of the Document, and likewise
+     the network locations given in the Document for previous versions
+     it was based on.  These may be placed in the "History" section.
+     You may omit a network location for a work that was published at
+     least four years before the Document itself, or if the original
+     publisher of the version it refers to gives permission.
+  K. For any section Entitled "Acknowledgements" or "Dedications",
+     Preserve the Title of the section, and preserve in the section all
+     the substance and tone of each of the contributor acknowledgements
+     and/or dedications given therein.
+  L. Preserve all the Invariant Sections of the Document,
+     unaltered in their text and in their titles.  Section numbers
+     or the equivalent are not considered part of the section titles.
+  M. Delete any section Entitled "Endorsements".  Such a section
+     may not be included in the Modified Version.
+  N. Do not retitle any existing section to be Entitled "Endorsements"
+     or to conflict in title with any Invariant Section.
+  O. Preserve any Warranty Disclaimers.
+  
+  If the Modified Version includes new front-matter sections or
+  appendices that qualify as Secondary Sections and contain no material
+  copied from the Document, you may at your option designate some or all
+  of these sections as invariant.  To do this, add their titles to the
+  list of Invariant Sections in the Modified Version's license notice.
+  These titles must be distinct from any other section titles.
+  
+  You may add a section Entitled "Endorsements", provided it contains
+  nothing but endorsements of your Modified Version by various
+  parties--for example, statements of peer review or that the text has
+  been approved by an organization as the authoritative definition of a
+  standard.
+  
+  You may add a passage of up to five words as a Front-Cover Text, and a
+  passage of up to 25 words as a Back-Cover Text, to the end of the list
+  of Cover Texts in the Modified Version.  Only one passage of
+  Front-Cover Text and one of Back-Cover Text may be added by (or
+  through arrangements made by) any one entity.  If the Document already
+  includes a cover text for the same cover, previously added by you or
+  by arrangement made by the same entity you are acting on behalf of,
+  you may not add another; but you may replace the old one, on explicit
+  permission from the previous publisher that added the old one.
+  
+  The author(s) and publisher(s) of the Document do not by this License
+  give permission to use their names for publicity for or to assert or
+  imply endorsement of any Modified Version.
+  
+  
+  5. COMBINING DOCUMENTS
+  
+  You may combine the Document with other documents released under this
+  License, under the terms defined in section 4 above for modified
+  versions, provided that you include in the combination all of the
+  Invariant Sections of all of the original documents, unmodified, and
+  list them all as Invariant Sections of your combined work in its
+  license notice, and that you preserve all their Warranty Disclaimers.
+  
+  The combined work need only contain one copy of this License, and
+  multiple identical Invariant Sections may be replaced with a single
+  copy.  If there are multiple Invariant Sections with the same name but
+  different contents, make the title of each such section unique by
+  adding at the end of it, in parentheses, the name of the original
+  author or publisher of that section if known, or else a unique number.
+  Make the same adjustment to the section titles in the list of
+  Invariant Sections in the license notice of the combined work.
+  
+  In the combination, you must combine any sections Entitled "History"
+  in the various original documents, forming one section Entitled
+  "History"; likewise combine any sections Entitled "Acknowledgements",
+  and any sections Entitled "Dedications".  You must delete all sections
+  Entitled "Endorsements".
+  
+  
+  6. COLLECTIONS OF DOCUMENTS
+  
+  You may make a collection consisting of the Document and other
+  documents released under this License, and replace the individual
+  copies of this License in the various documents with a single copy
+  that is included in the collection, provided that you follow the rules
+  of this License for verbatim copying of each of the documents in all
+  other respects.
+  
+  You may extract a single document from such a collection, and
+  distribute it individually under this License, provided you insert a
+  copy of this License into the extracted document, and follow this
+  License in all other respects regarding verbatim copying of that
+  document.
+  
+  
+  7. AGGREGATION WITH INDEPENDENT WORKS
+  
+  A compilation of the Document or its derivatives with other separate
+  and independent documents or works, in or on a volume of a storage or
+  distribution medium, is called an "aggregate" if the copyright
+  resulting from the compilation is not used to limit the legal rights
+  of the compilation's users beyond what the individual works permit.
+  When the Document is included in an aggregate, this License does not
+  apply to the other works in the aggregate which are not themselves
+  derivative works of the Document.
+  
+  If the Cover Text requirement of section 3 is applicable to these
+  copies of the Document, then if the Document is less than one half of
+  the entire aggregate, the Document's Cover Texts may be placed on
+  covers that bracket the Document within the aggregate, or the
+  electronic equivalent of covers if the Document is in electronic form.
+  Otherwise they must appear on printed covers that bracket the whole
+  aggregate.
+  
+  
+  8. TRANSLATION
+  
+  Translation is considered a kind of modification, so you may
+  distribute translations of the Document under the terms of section 4.
+  Replacing Invariant Sections with translations requires special
+  permission from their copyright holders, but you may include
+  translations of some or all Invariant Sections in addition to the
+  original versions of these Invariant Sections.  You may include a
+  translation of this License, and all the license notices in the
+  Document, and any Warranty Disclaimers, provided that you also include
+  the original English version of this License and the original versions
+  of those notices and disclaimers.  In case of a disagreement between
+  the translation and the original version of this License or a notice
+  or disclaimer, the original version will prevail.
+  
+  If a section in the Document is Entitled "Acknowledgements",
+  "Dedications", or "History", the requirement (section 4) to Preserve
+  its Title (section 1) will typically require changing the actual
+  title.
+  
+  
+  9. TERMINATION
+  
+  You may not copy, modify, sublicense, or distribute the Document
+  except as expressly provided under this License.  Any attempt
+  otherwise to copy, modify, sublicense, or distribute it is void, and
+  will automatically terminate your rights under this License.
+  
+  However, if you cease all violation of this License, then your license
+  from a particular copyright holder is reinstated (a) provisionally,
+  unless and until the copyright holder explicitly and finally
+  terminates your license, and (b) permanently, if the copyright holder
+  fails to notify you of the violation by some reasonable means prior to
+  60 days after the cessation.
+  
+  Moreover, your license from a particular copyright holder is
+  reinstated permanently if the copyright holder notifies you of the
+  violation by some reasonable means, this is the first time you have
+  received notice of violation of this License (for any work) from that
+  copyright holder, and you cure the violation prior to 30 days after
+  your receipt of the notice.
+  
+  Termination of your rights under this section does not terminate the
+  licenses of parties who have received copies or rights from you under
+  this License.  If your rights have been terminated and not permanently
+  reinstated, receipt of a copy of some or all of the same material does
+  not give you any rights to use it.
+  
+  
+  10. FUTURE REVISIONS OF THIS LICENSE
+  
+  The Free Software Foundation may publish new, revised versions of the
+  GNU Free Documentation License from time to time.  Such new versions
+  will be similar in spirit to the present version, but may differ in
+  detail to address new problems or concerns.  See
+  http://www.gnu.org/copyleft/.
+  
+  Each version of the License is given a distinguishing version number.
+  If the Document specifies that a particular numbered version of this
+  License "or any later version" applies to it, you have the option of
+  following the terms and conditions either of that specified version or
+  of any later version that has been published (not as a draft) by the
+  Free Software Foundation.  If the Document does not specify a version
+  number of this License, you may choose any version ever published (not
+  as a draft) by the Free Software Foundation.  If the Document
+  specifies that a proxy can decide which future versions of this
+  License can be used, that proxy's public statement of acceptance of a
+  version permanently authorizes you to choose that version for the
+  Document.
+  
+  11. RELICENSING
+  
+  "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
+  World Wide Web server that publishes copyrightable works and also
+  provides prominent facilities for anybody to edit those works.  A
+  public wiki that anybody can edit is an example of such a server.  A
+  "Massive Multiauthor Collaboration" (or "MMC") contained in the site
+  means any set of copyrightable works thus published on the MMC site.
+  
+  "CC-BY-SA" means the Creative Commons Attribution-Share Alike 3.0 
+  license published by Creative Commons Corporation, a not-for-profit 
+  corporation with a principal place of business in San Francisco, 
+  California, as well as future copyleft versions of that license 
+  published by that same organization.
+  
+  "Incorporate" means to publish or republish a Document, in whole or in 
+  part, as part of another Document.
+  
+  An MMC is "eligible for relicensing" if it is licensed under this 
+  License, and if all works that were first published under this License 
+  somewhere other than this MMC, and subsequently incorporated in whole or 
+  in part into the MMC, (1) had no cover texts or invariant sections, and 
+  (2) were thus incorporated prior to November 1, 2008.
+  
+  The operator of an MMC Site may republish an MMC contained in the site
+  under CC-BY-SA on the same site at any time before August 1, 2009,
+  provided the MMC is eligible for relicensing.
+  
+  
+  ADDENDUM: How to use this License for your documents
+  
+  To use this License in a document you have written, include a copy of
+  the License in the document and put the following copyright and
+  license notices just after the title page:
+  
+      Copyright (c)  YEAR  YOUR NAME.
+      Permission is granted to copy, distribute and/or modify this document
+      under the terms of the GNU Free Documentation License, Version 1.3
+      or any later version published by the Free Software Foundation;
+      with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+      A copy of the license is included in the section entitled "GNU
+      Free Documentation License".
+  
+  If you have Invariant Sections, Front-Cover Texts and Back-Cover Texts,
+  replace the "with...Texts." line with this:
+  
+      with the Invariant Sections being LIST THEIR TITLES, with the
+      Front-Cover Texts being LIST, and with the Back-Cover Texts being LIST.
+  
+  If you have Invariant Sections without Cover Texts, or some other
+  combination of the three, merge those two alternatives to suit the
+  situation.
+  
+  If your document contains nontrivial examples of program code, we
+  recommend releasing these examples in parallel under your choice of
+  free software license, such as the GNU General Public License,
+  to permit their use in free software.
+</PRE>
+
+<!-- html code generated by txt2tags 2.5 (http://txt2tags.sf.net) -->
+<!-- cmdline: txt2tags -\-mask-email -\-enum-title -\-toc -t html -i doc/hpa.t2t -o ./doc/hpa.html -->
+</BODY></HTML>

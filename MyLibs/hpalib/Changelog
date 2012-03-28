@@ -1,0 +1,84 @@
+Change log of the HPA library
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Version 1.0 >> Version 1.0a :
+
+The function xchcof() has been modified to remove
+a buffer overflow.
+
+Version 1.0a >> Version 1.6 :
+
+The prototypes of the functions xis0(), cxis0(), xnot0() and cxnot0()
+have been modified, in order to make the call of these
+functions quicker.
+
+The new comparison functions xisPinf(), xisMinf() and
+xisordnumb() have been added.
+
+The function xisNaN() has been modified to
+remove a bug.
+
+I have added the function xsgn(), to recover
+the sign of an extended precision number (+1 to
+mean positive value or +Inf, -1 to mean negative
+value or -Inf, 0 to mean zero or NaN).
+
+Removed a bug in the functions dbltox()
+and flttox().
+
+The output functions xpr_print() and xpr_asprint()
+have been modified to correct a bug and
+make their execution quicker.
+
+The functions xadd() and xmul() have been improved
+with the use of 'register' variables.
+
+Added a C++ wrapper together with the source code
+of the sample programs used to test it.
+
+The program 'hpaconf' and the makefiles
+have been consequently updated.
+
+Added an SMakefile to use with Smake,
+a 'make' utility from Joerg Schilling <schilling@fokus.gmd.de>.
+
+Added the new test program 'txscf.c' to the
+test/ directory.
+
+The perl script 'testex' in the test/
+directory has been replaced by an executable file.
+This is obtained by compiling 'testex.c' .
+
+The documentation has been completely rewritten
+by using txt2tags (http://txt2tags.sf.net).
+
+The Copyright statements have been updated
+with the new address of the Free Software
+Foundation.
+
+Version 1.6 >> Version 1.7 :
+
+The static function ctan() in xtrig.c has been
+renamed to c_tan() to prevent compiler warning messages.
+
+A very hazardous bug concerning the functions
+strtox() and atox() has been corrected.
+
+An instruction in the files cxaop.c and cxbasic.c,
+which prevented them from being compiled with
+MS-Visual C, has been changed.
+
+The bug of GCC 4.x which prevents the use of
+optimization levels higher than -O and -O1
+when compiling HPA is now documented.
+
+The functions xatan2() and xreal::atan2() have been added.
+
+Minor changes in the makefiles.
+
+The documentation has been corrected and updated.
+
+The programmer's manual is now licensed under
+GNU Free Documentation License version 1.3.
+
+***

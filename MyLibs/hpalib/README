@@ -1,0 +1,69 @@
+   Copyright (C)  2000    Daniel A. Atkinson  <DanAtk@aol.com>
+   Copyright (C)  2004    Ivano Primi  <ivprimi@libero.it>    
+
+   Copying and distribution of this file, with or without modification,
+   are permitted in any medium without royalty provided the copyright
+   notice and this notice are preserved.
+
+******************************************************************************
+
+                   HIGH PRECISION ARITHMETIC (abbr. HPA) LIBRARY
+
+                                    Summary
+
+                 The High Precision Arithmetic Library implements a high
+                 precision floating point arithmetic together with a
+                 comprehensive set of support functions. The general
+                 areas covered by these functions include:
+
+                     o Extended Precision Arithmetic   (both real and complex)
+                     o Extended Precision Math Library (both real and complex)
+                     o Applications of High Precision Computation
+
+                 The math library support includes evaluation of
+                 trigonometric, inverse trigonometric, hyperbolic,
+                 logarithm, and exponential functions at the same
+                 precision as the floating point math itself.
+
+
+** History **
+
+The HPA library comes from a branch of the source code of the CCMath library,
+which is a work by Daniel A. Atkinson.
+I took the source code in the 'xarm' section
+of the CCMath library, I modified a relevant part of it,
+then I added functions for complex arithmetic and
+the makefiles to compile the library on a GNU/Linux(R) or Unix(R) system.
+But the initial work was done by Daniel A. Atkinson, which 
+released the code of the CCMath Library under GNU Lesser 
+General Public License. This made possible that I could modify and 
+redistribute it under the same terms.
+
+** License **
+
+The HPA (abbreviation of HIGH PRECISION ARITHMETIC Library) is
+copyrighted by Ivano Primi (ivprimi@libero.it) and
+Daniel A. Atkinson (the author of the original code). 
+As for the source code of the CCMath Library, the source code
+of the HPA library is released under the terms of the GNU Lesser General 
+Public License, as published by the Free Software Foundation; 
+either version 2.1 of the License, or (at your option) any later version.
+
+The HPA library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this library; if not, write to the Free Software
+Foundation, Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
+
+You can contact me by email at the address
+
+	ivprimi (at) libero (dot) it                  .
+
+
+** Installation instructions            **
+
+Please, read the file INSTALL to know how 
+you can build and install the HPA library.

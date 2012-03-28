@@ -1,0 +1,106 @@
+BUGS LIST OF THE HPA LIBRARY
+
+Version 1.0
+
+*	A buffer overflow was present in the code
+	of the xchcof() function.
+
+Version 1.0a
+
+*	The function xisNaN() returned 0 if
+	its argument pointed to a number having
+	zero exponent and general non-zero mantissa.
+
+*	dbltox() and flttox() returned a non-zero
+	value if their argument was zero !
+
+*	xpr_print() and xpr_asprint() did not recognize
+	as zero a value having exponent > 0xffff and < 0x7fff,
+	and null mantissa.
+
+Version 1.6
+
+*       The static function ctan from the source file xtrig.c
+	made many compilers emit a warning. In version 1.7
+	it has been renamed as c_tan (thanks to A. Haumer for
+        his report).
+
+*	There were problems to build HPA with MS-Visual C,
+	since this compiler does not recognize the instruction
+
+   	return (struct cxpr) {re, im};
+
+	Thanks to A. Haumer for his bug report.
+
+*       A very hazardous bug affected the functions strtox()
+	and atox(): if the number of digits after the decimal 
+	point in the first string argument was larger than 
+	some threshold, then the exponent 
+	field could be missed altogether, resulting
+	in a completely incorrect answer.
+	Example for XDIM = 7:
+
+	atox("6.7153278372736521521577553571751268E-17")
+	
+	returned the right result, but
+
+	atox("6.71532783727365215215775535717512682E-17")
+
+	returned 6.715327837273652152157755357175.....E+0.
+
+	Thanks to S. Tan for this bug report.
+
+Version 1.7
+
+*	Ok, this is not actually a bug but a weakness.
+	The functions strtox() and atox() can return different results,
+	depending whether their first argument (an ASCII string) represents
+	a number in scientific or in common format (common format
+        means [-]ddd[.ddddd] ). For instance,
+	
+	atox("-0.00103")    
+
+		and   
+
+	atox("-1.03e-3")
+
+	return different results, even if -0.00103 and -1.03e-3 is
+	the same number expressed in common and scientific
+	format respectively. However, the difference between the results
+	returned in the two cases is very small, and it is only due
+	to a different approximation in the last 1-2 digits of the mantissa
+	of the binary representation.
+	The functions strtocx() and atocx() suffer from this problem too.  
+	This bug came out as result of the attempt to remove
+	another more annoying bug.
+
+*	The function xatanh() returns a quite inaccurate result
+	whenever its argument is very near to +1 or -1.
+	For instance:
+
+	x = +0.9999999999999999999998870000000
+
+ ===>   atanh(x) = +25.61390079673000760206236782734
+ 
+	while the correct value is
+
+		    25.61390079685235057863341952...
+
+*	The output functions write +Inf or -Inf
+	(depending on the sign of their argument)
+	instead of the actual value, if the absolute value
+        of their argument is equal to or greater
+	than 6.0e4931. Therefore, 9.99872e4931 is printed as
+	+Inf, and -1.0e4932 is printed as -Inf.
+
+*	This is not a bug of the HPA library, but
+	a bug of some releases of the compiler GCC 4.x.
+	If you compile HPA with GCC 4 and an optimization
+	flag equal to -O2 or higher (-O3, -O4, etc.), then
+	you usually get a bugged library.
+	This was first noticed by A. McCormack, who said
+	he was constantly getting 0.0000000000.
+	Later, I observed the same on my 64bit GNU/Linux
+	machine with GCC 4.4.4.
+	However, the optimization levels -O and -O1 work
+	fine also with GCC 4.x (at least on my machine :)).

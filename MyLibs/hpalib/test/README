@@ -1,0 +1,68 @@
+   Copyright (C)  2000    Daniel A. Atkinson  <DanAtk@aol.com>
+   Copyright (C)  2004    Ivano Primi  <ivprimi@libero.it>    
+
+     Copying and distribution of this file, with or without modification,
+     are permitted in any medium without royalty provided the copyright
+     notice and this notice are preserved.
+
+******************************************************************************
+
+     This directory contains test code for the functions of the High
+     Precision Arithmetic (HPA) library. Each test code file has a sample
+     of the correct output appended to it. The output appended as a comment
+     at the end of each test code file has been obtained for XDIM equal to 7.
+     If the version of HPA installed on your system has been built
+     by setting XDIM to a value greater than 7, then you will surely 
+     obtain a different output.
+     Input data files, if any are named in the test code header, are 
+     in the 'data' sub-directory.
+
+     The list below specifies the test input parameters required
+     for the standard tests whose output is appended as a comment
+     to the test source code. The absence of an entry indicates
+     that no input parameters are required. 
+
+     t2xtrig    data/xtrig.dat
+     tatox      data/atox.dat
+     tbxprint   data/bxprint.dat
+     tcform
+     tcxabs     data/cxgen.dat
+     tcxbasic
+     tcxbin     data/cxbin.dat
+     tcxcmp     data/cxcmp.dat
+     tcxfunc1   data/cxgen.dat
+     tcxfunc2   data/cxgen.dat
+     tcxfunc3   data/cxgen.dat
+     tcxout     data/cxout.dat
+     tcxpwr     data/cxpwr.dat
+     tinttox32  data/inttox32.dat
+     tinttox64  data/inttox64.dat
+     tprcxpr    data/prcxpr.dat
+     tprxpr     data/prxpr.dat
+     tspecv
+     tstr2cx    data/str2cx.dat	
+     tstr2x     data/str2x.dat
+     txaop1     data/aop1.dat
+     txaop2     -1.24e-3
+     txchser    12
+     txconv     data/xcvt.dat
+     txdiv
+                prompt sequence: 1 3 : 4 7 : 2 16 : 0 0
+     txexp
+     txfix      data/xfix.dat
+     txflt
+     txfmod     12.5 3
+     txfrac     data/xfrac.dat
+     txfrex     data/xfrex.dat
+     txhypb
+     txivhypb
+     txivtrg
+     txlog
+     txout      data/xout.dat
+     txprcmp    data/xcmp.dat
+     txpwr      -.7 6
+     txround    data/xround.dat
+     txscf
+     txsqrt
+     txtrig
+

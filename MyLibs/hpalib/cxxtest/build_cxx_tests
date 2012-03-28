@@ -1,0 +1,28 @@
+#! /bin/sh
+
+#   Copyright (C)  2000    Daniel A. Atkinson  <DanAtk@aol.com>
+#   Copyright (C)  2004    Ivano Primi  <ivprimi@libero.it>    
+
+#   Copying and distribution of this file, with or without modification,
+#   are permitted in any medium without royalty provided the copyright
+#   notice and this notice are preserved.
+
+CXX=c++
+LIST=$(ls cctest*.cc)
+CXXFLAGS=$(hpaxxconf -c)
+LDFLAGS=$(hpaxxconf -l)
+DEF_OUT="./a.out"
+
+echo "Compiling and linking with:  $CXX $CXXFLAGS source_file $LDFLAGS"
+echo "                    ***     ***     ***"
+for SRC in $LIST
+do
+	$CXX $CXXFLAGS $SRC $LDFLAGS
+	if test $? -eq 0
+	then
+		echo "$SRC successfully compiled and linked"
+	else
+		echo "Error occurred while dealing with $SRC"
+	fi
+done
+rm $DEF_OUT
