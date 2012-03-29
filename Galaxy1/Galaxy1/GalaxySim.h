@@ -54,6 +54,7 @@ private:
 	bool _error;
 	size_t _bodyCount;
 	double xOffset, yOffset,  xScale, yScale, xRange, yRange;
+	double massOffset, massScale;
 	BHTree bhTree;
 	math::AABBd currBounds;
 	cv::VideoWriter _video;

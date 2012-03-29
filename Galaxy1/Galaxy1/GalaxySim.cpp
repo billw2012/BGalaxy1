@@ -3,7 +3,7 @@
 #include <iostream>
 #include <boost/random/taus88.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
-#include <boost/random/normal_distribution.hpp>
+#include <boost/random/exponential_distribution.hpp>
 #include <QColor>
 
 using namespace opencl;
@@ -111,18 +111,24 @@ void GalaxySim::initialize_universe(double minMass, double maxMass,
 	initialize_bodies(minMass, maxMass, size, initVel, SimType::Universe);
 }
 
+#define PI_VAL 3.14159265
+
 void GalaxySim::initialize_bodies( double minMass, double maxMass, double size, 
 	double initVel, SimType::type simType)
 {
 	boost::random::taus88 rng;
 	boost::random::uniform_real_distribution<double> massRange(minMass, maxMass);
-	boost::random::normal_distribution<double> posRange(0.0, 0.3);
+	boost::random::uniform_real_distribution<double> angleRange(0.0, 2 * PI_VAL);
+	boost::random::uniform_real_distribution<double> zrRange(-1.0, 1.0);
+	boost::random::exponential_distribution<double> posRange(1.2);
 	using namespace math;
 	Matrix3d rot(
 		0,  1,  1, 
 	   -1,  0,  1,
 		0,  0,  1);
-	double velScale = (size);
+
+	massOffset = minMass * 0.5;
+	massScale = 255.0 / (maxMass * 0.5 - minMass);
 
 	currBounds.reset();
 	for(size_t idx = 0; idx < _bodyCount; ++idx)
@@ -134,15 +140,20 @@ void GalaxySim::initialize_bodies( double minMass, double maxMass, double size,
 		if(simType == SimType::Galaxy)
 		{
 			Vector3d currPosT;
+			
 			do 
 			{
-				currPosT = Vector3d(posRange(rng) * size, posRange(rng) * size, posRange(rng) * size * 0.1);
+				double distance = posRange(rng) * size * 0.2;
+				double angle = angleRange(rng);
+				double x = sin(angle);
+				double y = cos(angle);
+				currPosT = Vector3d(x * distance, y * distance, zrRange(rng) * size * 0.01);
 			} while (currPosT.length() > size);
 			currPos.s[0] = currPosT.x;
 			currPos.s[1] = currPosT.y;
 			currPos.s[2] = currPosT.z;
 
-			currBounds.expand(convert_to_my_vec3(currPos));
+			currBounds.expand(currPosT);
 
 			//double len = currPosT.lengthSquared() * 0.5;
 			//Vector3d currPosV(currPos.s[0], currPos.s[1], 1);
@@ -189,12 +200,12 @@ void GalaxySim::initialize_bodies( double minMass, double maxMass, double size,
 			Vector3d currAccelT(currAccel.s[0], currAccel.s[1], currAccel.s[2]);
 			const cl_double4& currPos	= position[idx];
 			Vector3d currPosT(currPos.s[0], currPos.s[1], currPos.s[2]);
-			double escapeVel = - std::sqrt(0.5 * currAccelT.length() * currPosT.length());
+			double escapeVel = - std::sqrt(1.0 * currAccelT.length() * currPosT.length());
 			//double len = currPosT.lengthSquared() * 0.5;
 			//Vector3d currPosV(currPos.s[0], currPos.s[1], 1);
 			//currPosV.normalize();
 
-			Vector3d newVelT = rot * currPosT.normal() * escapeVel;
+			Vector3d newVelT = rot * currAccelT.normal() * escapeVel;
 
 			cl_double4& currVel			= velocity[idx];
 			currVel.s[0] = newVelT.x;
@@ -202,10 +213,10 @@ void GalaxySim::initialize_bodies( double minMass, double maxMass, double size,
 			currVel.s[2] = newVelT.z;
 		}
 
-		xOffset = currBounds.min().x * 3;
-		yOffset = currBounds.min().y * 3;
-		xRange = currBounds.extents().x * 3;
-		yRange = currBounds.extents().y * 3;
+		xOffset = currBounds.min().x * 2;
+		yOffset = currBounds.min().y * 2;
+		xRange = currBounds.extents().x * 2;
+		yRange = currBounds.extents().y * 2;
 		xScale = static_cast<double>(IMAGE_WIDTH - 1) / xRange;
 		yScale = static_cast<double>(IMAGE_HEIGHT - 1) / yRange;
 	}
@@ -254,18 +265,18 @@ void GalaxySim::output_image()
 	//QRgb col = QColor(Qt::white).rgb();
 	output.fill(Qt::black);
 
-	double zOffset = currBounds.min().z;
-	double zScale = 255 / currBounds.extents().z;
+	//double zOffset = currBounds.min().z;
+	//double zScale = 255 / currBounds.extents().z;
 
 	currBounds.reset();
 	for(size_t idx = 0; idx < positionVals.size(); ++idx)
 	{
 		int x = (positionVals[idx].s[0] - xOffset) * xScale;
 		int y = (positionVals[idx].s[1] - yOffset) * yScale;
-		unsigned char z = (positionVals[idx].s[2] - zOffset) * zScale;
+		unsigned char c = (mass[idx] - massOffset) * massScale;
 		if(x >= 0 && x < IMAGE_WIDTH && y >= 0 && y < IMAGE_HEIGHT)
 		{
-			output.setPixel(x, y, (z << 16) + (z << 8) + z);
+			output.setPixel(x, y, (c << 16) + (c << 8) + c);
 		}
 		currBounds.expand(convert_to_my_vec3(positionVals[idx]));
 	}

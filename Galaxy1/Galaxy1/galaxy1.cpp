@@ -14,7 +14,7 @@ using namespace opencl;
 void Galaxy1::idle_processing()
 {
 	while(!terminateSim)
-		sim.iterate(1);
+		sim.iterate(10000);
 }
 
 void Galaxy1::processButton_clicked(bool checked)
@@ -46,7 +46,7 @@ Galaxy1::Galaxy1(QWidget *parent, Qt::WFlags flags)
 	
 	using namespace opencl;
 
-	if(!sim.init(3000))
+	if(!sim.init(30000))
 	{
 		std::cout << "Could not initialize sim!" << std::endl;
 		return ;
@@ -55,7 +55,7 @@ Galaxy1::Galaxy1(QWidget *parent, Qt::WFlags flags)
 	sim.init_writing("../Data/Results/output.avi");
 	//sim.initialize_bodies(0.1 * SOLAR_MASS_IN_EARTH_MASS, 2 * SOLAR_MASS_IN_EARTH_MASS, -1 * AU_PER_LIGHTYEAR, 1 * AU_PER_LIGHTYEAR);
 	//sim.initialize_universe(0.1 * SOLAR_MASS_IN_EARTH_MASS, 2 * SOLAR_MASS_IN_EARTH_MASS, 10 * AU_PER_LIGHTYEAR, 1);
-	sim.initialize_galaxy(0.1 * SOLAR_MASS_IN_EARTH_MASS, 2 * SOLAR_MASS_IN_EARTH_MASS, 0.2 * AU_PER_LIGHTYEAR);
+	sim.initialize_galaxy(0.1 * SOLAR_MASS_IN_EARTH_MASS, 10 * SOLAR_MASS_IN_EARTH_MASS, 50000 * AU_PER_LIGHTYEAR);
 
 	scene = new QGraphicsScene();
 	lastImageItem = new QGraphicsPixmapItem();
