@@ -55,9 +55,12 @@ private:
 	size_t _bodyCount;
 	double xOffset, yOffset,  xScale, yScale, xRange, yRange;
 	double massOffset, massScale;
+	double bhTheta;
 	BHTree bhTree;
 	math::AABBd currBounds;
 	cv::VideoWriter _video;
+	opencl::CLDevice partitionedDevices[2];
+	opencl::CLDevice* activeDevice;
 
 };
 #endif // GalaxySim_h__

@@ -13,24 +13,27 @@ void BHTree::evaluate_node_mass( const BHNodePtr& node,
 
 	Vector3d mrsum = Vector3d::Zero;
 	double msum = 0.0;
-	// center of mass R = 1/M * sum(mi*ri), where M = sum(mi), mi = mass for particle i and ri = position for particle i
-	std::for_each(node->children.begin(), node->children.end(), [&](const BHNodePtr& childNode)
+	double averageFac = 1.0 / (double)node->tempIndexes.size();
+	std::for_each(node->tempIndexes.begin(), node->tempIndexes.end(), [&](size_t idx)
 	{
-		evaluate_node_mass(childNode, positions, masses);
-		mrsum += childNode->massCenter * childNode->mass;
-		msum += childNode->mass;
-	});
-	std::for_each(node->tempIndexes.begin(), node->tempIndexes.end(), [&positions, &masses, &mrsum, &msum](size_t idx)
-	{
-		mrsum += math::Vector3d(positions[idx].s[0], positions[idx].s[1], positions[idx].s[2]) * masses[idx];
+		mrsum += (math::Vector3d(positions[idx].s[0], positions[idx].s[1], positions[idx].s[2]) * masses[idx]/* * averageFac*/);
 		msum += masses[idx];
 	});
 
-	if(msum != 0.0)
-	{
-		node->massCenter = mrsum * (1 / msum);
-		node->mass = msum;
-	}
+	if(msum > 0.0)
+		node->massCenter = mrsum / msum;
+	node->mass = msum;
+
+	node->tempIndexes.clear();
+	node->tempIndexes.shrink_to_fit();
+
+	//// center of mass R = 1/M * sum(mi*ri), where M = sum(mi), mi = mass for particle i and ri = position for particle i
+	//std::for_each(node->children.begin(), node->children.end(), [&](const BHNodePtr& childNode)
+	//{
+	//	evaluate_node_mass(childNode, positions, masses);
+	//	//mrsum += childNode->massCenter * childNode->mass;
+	//	//msum += childNode->mass;
+	//});
 }
 
 void BHTree::init()
@@ -95,13 +98,14 @@ void BHTree::build( const opencl::OpenCLBuffer<cl_double3>::vector_type& positio
 					++ nodeCount;
 				}
 			}
-			currNode->tempIndexes.clear();
-			currNode->tempIndexes.shrink_to_fit();
+			//currNode->tempIndexes.clear();
+			//currNode->tempIndexes.shrink_to_fit();
 		}
+		evaluate_node_mass(currNode, positions, masses);
 	}
 
 	// evaluate the masses
-	evaluate_node_mass(root, positions, masses);
+	//evaluate_node_mass(root, positions, masses);
 
 	// convert tree into linear vector
 	nodeStack.push_back(root);

@@ -30,20 +30,17 @@ void GalaxySim::init_writing(const std::string& outputFile)
 
 bool GalaxySim::load_kernel( CLProgram& program, const std::string& file, const std::string& kernel )
 {
-	if(!program.create(file, 
+	bool buildSuccess = program.create(file, 
 #if defined(KERNEL_DEBUGGING)
-		CLProgram::ProgramOptions().debugging(), devices[DEFAULT_DEVICE_INDEX]
+		CLProgram::ProgramOptions().debugging(), *activeDevice
 #else
 		CLProgram::ProgramOptions()
 #endif
-		)) 
-	{
-		return false;
-	}
+		);
 
 #if defined(KERNEL_DEBUGGING)
-	std::cout << file << " build log for device " << devices[DEFAULT_DEVICE_INDEX].name << std::endl <<
-		program.get_build_log(devices[DEFAULT_DEVICE_INDEX]) << std::endl;
+	std::cout << file << " build log for device " << *activeDevice.name << std::endl <<
+		program.get_build_log(*activeDevice) << std::endl;
 #else
 	std::for_each(devices.begin(), devices.end(), [&](const CLDevice& device) {
 		std::cout << file << " build log for device " << device.name << std::endl <<
@@ -55,12 +52,44 @@ bool GalaxySim::load_kernel( CLProgram& program, const std::string& file, const 
 		std::cout << "Could not create kernel " << kernel << std::endl;
 		return false;
 	}
-	return true;
+	return buildSuccess;
 }
+
+// Init extension function pointers
+#define INIT_CL_EXT_FCN_PTR(name) \
+	if(!pfn_##name) { \
+	pfn_##name = (name##_fn) clGetExtensionFunctionAddress(#name); \
+	if(!pfn_##name) { \
+	std::cout << "Cannot get pointer to ext. fcn. " #name << std::endl; \
+	return false; \
+	} \
+	}
+
+static clCreateSubDevicesEXT_fn pfn_clCreateSubDevicesEXT = NULL;
+static clReleaseDeviceEXT_fn pfn_clReleaseDeviceEXT = NULL;
 
 bool GalaxySim::init( size_t bodyCount )
 {
 	devices = OpenCL::get_all_devices();
+
+	activeDevice = &devices[DEFAULT_DEVICE_INDEX];
+	//// Initialize clCreateSubDevicesEXT and clReleaseDeviceEXT function pointers
+	//INIT_CL_EXT_FCN_PTR(clCreateSubDevicesEXT);
+	//INIT_CL_EXT_FCN_PTR(clReleaseDeviceEXT);
+
+	//cl_device_partition_property_ext props[] = { (cl_device_partition_property_ext)CL_DEVICE_PARTITION_BY_COUNTS_EXT, 
+	//	(cl_device_partition_property_ext)devices[DEFAULT_DEVICE_INDEX].computeUnits - 1, 1, 0 };
+	//cl_device_id outDevices[2];
+	//cl_uint numDevicesRet;
+	//cl_int result = pfn_clCreateSubDevicesEXT(devices[DEFAULT_DEVICE_INDEX].device, props, 2, outDevices, &numDevicesRet);
+	//if(result != CL_SUCCESS)
+	//{
+	//	std::cout << "Partitioning devices failed!" << std::endl;
+	//	return false;
+	//}
+	//partitionedDevices[0] = CLDevice(outDevices[0], devices[DEFAULT_DEVICE_INDEX].context, 
+	//	::clCreateCommandQueue(devices[DEFAULT_DEVICE_INDEX].context, outDevices[0], 0, NULL));
+	//activeDevice = &partitionedDevices[0];
 
 #if defined(USE_OPENCL)
 	if(!load_kernel(gravityProgram, GRAVITY_PROGRAM, GRAVITY_KERNEL))
@@ -90,9 +119,11 @@ bool GalaxySim::init( size_t bodyCount )
 	moveProgram.bind_parameter(MOVE_KERNEL, 1, position);
 	moveProgram.bind_parameter(MOVE_KERNEL, 2, velocity);
 	moveProgram.bind_parameter(MOVE_KERNEL, 3, acceleration);
+	moveProgram.bind_parameter(MOVE_KERNEL, 4, bodyCount);
 	gravityProgram.bind_parameter(GRAVITY_KERNEL, 1, position);
 	gravityProgram.bind_parameter(GRAVITY_KERNEL, 2, mass);
 	gravityProgram.bind_parameter(GRAVITY_KERNEL, 3, acceleration);
+	gravityProgram.bind_parameter(GRAVITY_KERNEL, 9, bodyCount);
 #endif
 
 	_bodyCount = bodyCount;
@@ -130,6 +161,11 @@ void GalaxySim::initialize_bodies( double minMass, double maxMass, double size,
 	massOffset = minMass * 0.5;
 	massScale = 255.0 / (maxMass * 0.5 - minMass);
 
+	bhTheta = 5.0;
+#if defined(USE_OPENCL)
+	gravityProgram.bind_parameter(GRAVITY_KERNEL, 0, (cl_double)bhTheta);
+#endif
+
 	currBounds.reset();
 	for(size_t idx = 0; idx < _bodyCount; ++idx)
 	{
@@ -166,11 +202,11 @@ void GalaxySim::initialize_bodies( double minMass, double maxMass, double size,
 		}
 		else
 		{
-			Vector3d rpos(posRange(rng), posRange(rng), posRange(rng));
+			Vector3d rpos(zrRange(rng), zrRange(rng), zrRange(rng));
 			rpos.normalize();
-			currPos.s[0] = rpos.x * 0.1;
-			currPos.s[1] = rpos.y * 0.1;
-			currPos.s[2] = rpos.z * 0.1;
+			currPos.s[0] = rpos.x * 1;
+			currPos.s[1] = rpos.y * 1;
+			currPos.s[2] = rpos.z * 1;
 			currVel.s[0] = rpos.x * initVel;
 			currVel.s[1] = rpos.y * initVel;
 			currVel.s[2] = rpos.z * initVel;
@@ -181,16 +217,16 @@ void GalaxySim::initialize_bodies( double minMass, double maxMass, double size,
 		// determine acceleration for objects
 
 #if defined(USE_OPENCL)
-		position.enqueue_write(devices[DEFAULT_DEVICE_INDEX], true);
-		mass.enqueue_write(devices[DEFAULT_DEVICE_INDEX], true);
-		acceleration.enqueue_write(devices[DEFAULT_DEVICE_INDEX], true);
-		velocity.enqueue_write(devices[DEFAULT_DEVICE_INDEX], true);
+		position.enqueue_write(*activeDevice, true);
+		mass.enqueue_write(*activeDevice, true);
+		acceleration.enqueue_write(*activeDevice, true);
+		velocity.enqueue_write(*activeDevice, true);
 #endif
 
 		iterate_gravity();
 
 #if defined(USE_OPENCL)
-		acceleration.enqueue_read(devices[DEFAULT_DEVICE_INDEX], true);
+		acceleration.enqueue_read(*activeDevice, true);
 #endif
 
 		for(size_t idx = 0; idx < _bodyCount; ++idx)
@@ -200,23 +236,24 @@ void GalaxySim::initialize_bodies( double minMass, double maxMass, double size,
 			Vector3d currAccelT(currAccel.s[0], currAccel.s[1], currAccel.s[2]);
 			const cl_double4& currPos	= position[idx];
 			Vector3d currPosT(currPos.s[0], currPos.s[1], currPos.s[2]);
-			double escapeVel = - std::sqrt(1.0 * currAccelT.length() * currPosT.length());
+			double initialStability = 1.3; // 1.0 for perfect stability, lower for collapse, higher for explosion
+			double escapeVel = - std::sqrt(initialStability * currAccelT.length() * currPosT.length());
 			//double len = currPosT.lengthSquared() * 0.5;
 			//Vector3d currPosV(currPos.s[0], currPos.s[1], 1);
 			//currPosV.normalize();
 
 			Vector3d newVelT = rot * currAccelT.normal() * escapeVel;
 
-			cl_double4& currVel			= velocity[idx];
+			cl_double4& currVel = velocity[idx];
 			currVel.s[0] = newVelT.x;
 			currVel.s[1] = newVelT.y;
 			currVel.s[2] = newVelT.z;
 		}
 
-		xOffset = currBounds.min().x * 2;
-		yOffset = currBounds.min().y * 2;
-		xRange = currBounds.extents().x * 2;
-		yRange = currBounds.extents().y * 2;
+		xOffset = currBounds.min().x * 1.5;
+		yOffset = currBounds.min().y * 1.5;
+		xRange = currBounds.extents().x * 1.5;
+		yRange = currBounds.extents().y * 1.5;
 		xScale = static_cast<double>(IMAGE_WIDTH - 1) / xRange;
 		yScale = static_cast<double>(IMAGE_HEIGHT - 1) / yRange;
 	}
@@ -231,10 +268,11 @@ void GalaxySim::initialize_bodies( double minMass, double maxMass, double size,
 	}
 
 #if defined(USE_OPENCL)
-	position.enqueue_write(devices[DEFAULT_DEVICE_INDEX], true);
-	mass.enqueue_write(devices[DEFAULT_DEVICE_INDEX], true);
-	acceleration.enqueue_write(devices[DEFAULT_DEVICE_INDEX], true);
-	velocity.enqueue_write(devices[DEFAULT_DEVICE_INDEX], true);
+
+	position.enqueue_write(*activeDevice, true);
+	mass.enqueue_write(*activeDevice, true);
+	acceleration.enqueue_write(*activeDevice, true);
+	velocity.enqueue_write(*activeDevice, true);
 #endif
 }
 
@@ -247,7 +285,7 @@ void GalaxySim::iterate( double t )
 	iterate_gravity();
 
 //#if defined(USE_OPENCL)
-//	acceleration.enqueue_read(devices[DEFAULT_DEVICE_INDEX], true);
+//	acceleration.enqueue_read(*activeDevice, true);
 //#endif
 
 	iterate_move(t);
@@ -269,6 +307,7 @@ void GalaxySim::output_image()
 	//double zScale = 255 / currBounds.extents().z;
 
 	currBounds.reset();
+	math::Vector3d avPos;
 	for(size_t idx = 0; idx < positionVals.size(); ++idx)
 	{
 		int x = (positionVals[idx].s[0] - xOffset) * xScale;
@@ -279,7 +318,10 @@ void GalaxySim::output_image()
 			output.setPixel(x, y, (c << 16) + (c << 8) + c);
 		}
 		currBounds.expand(convert_to_my_vec3(positionVals[idx]));
+		avPos += convert_to_my_vec3(positionVals[idx]) / (double)_bodyCount;
 	}
+	xOffset = avPos.x - xRange * 0.5;
+	yOffset = avPos.y - yRange * 0.5;
 
 	if(_video.isOpened())
 	{
@@ -296,9 +338,9 @@ void GalaxySim::iterate_move( double t )
 #if defined(USE_OPENCL)
 
 	moveProgram.bind_parameter(MOVE_KERNEL, 0, (cl_double)t);
-	moveProgram.enqueue_work(devices[DEFAULT_DEVICE_INDEX], MOVE_KERNEL, _bodyCount);
+	moveProgram.enqueue_work(*activeDevice, MOVE_KERNEL, /*0,*/ _bodyCount/*, _bodyCount*/);
 
-	position.enqueue_read(devices[DEFAULT_DEVICE_INDEX], true);
+	position.enqueue_read(*activeDevice, true);
 #else
 	for(size_t idx = 0; idx < _bodyCount; ++idx)
 	{
@@ -310,23 +352,37 @@ void GalaxySim::iterate_move( double t )
 
 void GalaxySim::iterate_gravity()
 {
-	double minDistance = currBounds.extents().length() / 10.0;
 
 	bhTree.build(position.get_data(), mass.get_data(), currBounds.min(), currBounds.max());
 
 #if defined(USE_OPENCL)
-	bhTree.enqueue_write(devices[DEFAULT_DEVICE_INDEX]);
+	bhTree.enqueue_write(*activeDevice);
 
-	gravityProgram.bind_parameter(GRAVITY_KERNEL, 0, (cl_double)minDistance);
 	bhTree.bind_as_parameters(gravityProgram, GRAVITY_KERNEL, 4);
 
-	gravityProgram.enqueue_work(devices[DEFAULT_DEVICE_INDEX], GRAVITY_KERNEL, _bodyCount);
+	//const int blocksize = 10;
+	//div_t divt = ::div(_bodyCount, blocksize);
+	
+// 	for(size_t idx = 0; idx < divt.quot; ++idx)
+// 	{
+// 		//gravityProgram.bind_parameter(GRAVITY_KERNEL, 9, (cl_int)(idx * blocksize));
+// 		gravityProgram.enqueue_work(*activeDevice, GRAVITY_KERNEL, idx * blocksize, _bodyCount, blocksize);
+// 	}
+// 	//gravityProgram.bind_parameter(GRAVITY_KERNEL, 9, (cl_int)(blocksize * divt.quot));
+// 	if(divt.rem != 0)
+// 		gravityProgram.enqueue_work(*activeDevice, GRAVITY_KERNEL, divt.quot * blocksize, _bodyCount, divt.rem);
+	//for(size_t idx = 0; idx < _bodyCount; ++idx)
+	//{
+	//	gravityProgram.bind_parameter(GRAVITY_KERNEL, 9, (cl_int)idx);
+	//	gravityProgram.enqueue_work(*activeDevice, GRAVITY_KERNEL, 1);
+	//}
+	gravityProgram.enqueue_work(*activeDevice, GRAVITY_KERNEL, _bodyCount);
 
 	gravityProgram.wait_all();
 #else
 	for(size_t idx = 0; idx < _bodyCount; ++idx)
 	{
-		program_gravity(idx, position[idx], mass[idx], minDistance, &acceleration.get_data()[0], 
+		program_gravity(idx, position[idx], mass[idx], bhTheta, &acceleration.get_data()[0], 
 			&bhTree.nodes_children.get_data()[0], &bhTree.nodes_massCenter.get_data()[0],
 			&bhTree.nodes_mass.get_data()[0], &bhTree.nodes_nnn.get_data()[0],
 			&bhTree.nodes_ppp.get_data()[0]);

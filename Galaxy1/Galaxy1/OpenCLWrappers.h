@@ -49,6 +49,8 @@ struct CLDevice
 	size_t maxWorkGroupSize;
 	cl_uint maxWorkItemDimensions;
 	std::vector<size_t> maxWorkItemSizes;
+	cl_uint maxSubDevices;
+	std::vector<cl_device_partition_property_ext> subDevicePartitionProperties;
 };
 
 struct CLPlatform
@@ -188,7 +190,7 @@ struct CLProgram : public CLEventSet
 
 	typedef std::shared_ptr<CLExecution> CLExecutionPtr;
 
-	std::vector<CLExecutionPtr> enqueue_work(const CLDevice& device, const std::string& kernelFnName, size_t globalWorkSize);
+	std::vector<CLExecutionPtr> enqueue_work(const CLDevice& device, const std::string& kernelFnName, size_t globalWorkSize, size_t localWorkSize = 64);
 
 	virtual bool clear_complete();
 	virtual bool commands_complete();

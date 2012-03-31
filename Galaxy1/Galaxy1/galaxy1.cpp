@@ -2,6 +2,8 @@
 
 #include "Ugly/QtUtils.h"
 
+#include <Windows.h>
+
 
 #if defined(KERNEL_DEBUGGING)
 #define REMOVE_WITHOUT_KERNEL_DEBUGGING(x) x
@@ -11,10 +13,17 @@
 
 using namespace opencl;
 
+//#define UNIVERSE_SIM
+
+#if defined(UNIVERSE_SIM)
+#	define ITERATION_DURATION 1
+#else
+#	define ITERATION_DURATION 10000
+#endif
 void Galaxy1::idle_processing()
 {
 	while(!terminateSim)
-		sim.iterate(10000);
+		sim.iterate(ITERATION_DURATION);
 }
 
 void Galaxy1::processButton_clicked(bool checked)
@@ -46,7 +55,7 @@ Galaxy1::Galaxy1(QWidget *parent, Qt::WFlags flags)
 	
 	using namespace opencl;
 
-	if(!sim.init(30000))
+	if(!sim.init(5000))
 	{
 		std::cout << "Could not initialize sim!" << std::endl;
 		return ;
@@ -54,8 +63,11 @@ Galaxy1::Galaxy1(QWidget *parent, Qt::WFlags flags)
 
 	sim.init_writing("../Data/Results/output.avi");
 	//sim.initialize_bodies(0.1 * SOLAR_MASS_IN_EARTH_MASS, 2 * SOLAR_MASS_IN_EARTH_MASS, -1 * AU_PER_LIGHTYEAR, 1 * AU_PER_LIGHTYEAR);
-	//sim.initialize_universe(0.1 * SOLAR_MASS_IN_EARTH_MASS, 2 * SOLAR_MASS_IN_EARTH_MASS, 10 * AU_PER_LIGHTYEAR, 1);
+#if defined(UNIVERSE_SIM)
+	sim.initialize_universe(0.1 * SOLAR_MASS_IN_EARTH_MASS, 10 * SOLAR_MASS_IN_EARTH_MASS, 5000 * AU_PER_LIGHTYEAR, 50000000);
+#else
 	sim.initialize_galaxy(0.1 * SOLAR_MASS_IN_EARTH_MASS, 10 * SOLAR_MASS_IN_EARTH_MASS, 50000 * AU_PER_LIGHTYEAR);
+#endif
 
 	scene = new QGraphicsScene();
 	lastImageItem = new QGraphicsPixmapItem();
@@ -65,10 +77,19 @@ Galaxy1::Galaxy1(QWidget *parent, Qt::WFlags flags)
 
 
 	asserted_connect(ui.processButton, SIGNAL(clicked(bool)), this, SLOT(processButton_clicked(bool)));
+
+	// try this for vista, it will fail on XP
+	if (::SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED) == NULL)
+	{
+		// try XP variant as well just to make sure 
+		::SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
+	}  // if
 }
 
 Galaxy1::~Galaxy1()
 {
 	terminateSim = true;
 	executeThread.join();
+	// set state back to normal
+	SetThreadExecutionState(ES_CONTINUOUS);
 }

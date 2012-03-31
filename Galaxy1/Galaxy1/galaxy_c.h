@@ -56,29 +56,34 @@ cl_double distance_to_aabb(const cl_double3 nnn, const cl_double3 ppp, const cl_
 	return distance(pos, closest);
 }
 
+cl_double bh_calc_s_over_d(const cl_double3 nnn, const cl_double3 ppp, const cl_double3 pos)
+{
+	double distToNode = distance_to_aabb(nnn, ppp, pos);
+	double regionSize = distance(nnn, ppp);
+	return regionSize / distToNode;
+}
 
 cl_double3 calculate_acceleration(const cl_double3 p0, const cl_double mass0, const cl_double3 p1, const cl_double mass1)
 {
 	static cl_double3 zero = {0.0, 0.0, 0.0, 0.0};
 	cl_double3 v = p1 - p0;
 	cl_double len = length(v);
-	if(len < 0.1)
+	if(len <= 0.0001)
 		return zero;
-	return v * (0.000118580398 * mass1 * mass0 / (pow(length(v), 2) * mass1));
+	return v * (0.000118580398 * mass0 * mass1 / (len * len * mass0));
 }
 
 void program_gravity (
 	cl_int currIdx,
 	const cl_double3 currPos, 
 	const cl_double currMass, 
-	const cl_double minDistance, 
+	const cl_double bhTheta, 
 	cl_double3* accelaration, 
 	const cl_int* BHNode_children, 
 	const cl_double3* BHNode_massCenter, 
 	const cl_double* BHNode_mass, 
 	const cl_double3* BHNode_nnn, 
 	const cl_double3* BHNode_ppp
-
 	)
 {
 	int stack[2048];
@@ -93,7 +98,7 @@ void program_gravity (
 		int currNodeIdx = stack[stackIdx];
 		const int*	currNode_children	= &BHNode_children	[currNodeIdx * 8];
 		if(currNode_children[0] == -1 || 
-			distance_to_aabb(BHNode_nnn[currNodeIdx], BHNode_ppp[currNodeIdx], currPos) > minDistance)
+			bh_calc_s_over_d(BHNode_nnn[currNodeIdx], BHNode_ppp[currNodeIdx], currPos) < bhTheta)
 		{
 			accelerationAccum = accelerationAccum + calculate_acceleration(currPos, currMass, BHNode_massCenter[currNodeIdx], BHNode_mass[currNodeIdx]);
 		}
@@ -103,6 +108,11 @@ void program_gravity (
 			{
 				stack[stackIdx] = currNode_children[child];
 				++stackIdx;
+				if(stackIdx >= 2048)
+				{
+					accelaration[currIdx].s[0] = 1000000000.0;
+					return;
+				}
 			}
 		}
 	}

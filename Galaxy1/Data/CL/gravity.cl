@@ -6,6 +6,13 @@ double distance_to_aabb(const double3 nnn, const double3 ppp, const double3 pos)
 	return distance(pos.xyz, closest);
 }
 
+double bh_calc_s_over_d(const double3 nnn, const double3 ppp, const double3 pos)
+{
+	double distToNode = distance_to_aabb(nnn, ppp, pos);
+	double regionSize = distance(nnn, ppp);
+	return regionSize / distToNode;
+}
+
 // [length3] [mass-1] [time-2]
 // gravitational constant = 
 // 1.56092357 × 10-13 (light years cubed) over (solar masses (years squared))
@@ -21,14 +28,13 @@ double3 calculate_acceleration(const double3 p0, const double mass0, const doubl
 {
 	double3 v = p1 - p0;
 	double len = length(v);
-	if(len <= 0.001)
+	if(len <= 0.0001)
 		return 0.0;
-	return v * (g * mass1 * mass0 / (pow(len, 2) * mass1));
+	return v * (g * mass0 * mass1 / (len * len * mass0));
 }
 
 __kernel void gravity (
-	//int currIdx,
-	const double minDistance, 
+	const double bhTheta, 
 	__global const double3* positons, 
 	__global const double* mass, 
 	__global double3* accelaration, 
@@ -36,11 +42,13 @@ __kernel void gravity (
 	__global const double3* BHNode_massCenter, 
 	__global const double* BHNode_mass, 
 	__global const double3* BHNode_nnn, 
-	__global const double3* BHNode_ppp
-	//__global const BHNode_CL* tree
+	__global const double3* BHNode_ppp,
+	const int totalWorkSize
 	)
 {
-	int currIdx = get_global_id(0);
+	int currIdx = get_global_id(0);// + currIdxOffs;
+	if(currIdx >= totalWorkSize)
+		return;
 
 	double3 currPos = positons[currIdx];
 	double currMass = mass[currIdx];
@@ -57,7 +65,7 @@ __kernel void gravity (
 		int currNodeIdx = stack[stackIdx];
 		__global const int*	currNode_children	= &BHNode_children	[currNodeIdx * 8];
 		if(currNode_children[0] == -1 || 
-			distance_to_aabb(BHNode_nnn[currNodeIdx], BHNode_ppp[currNodeIdx], currPos) > minDistance)
+			bh_calc_s_over_d(BHNode_nnn[currNodeIdx], BHNode_ppp[currNodeIdx], currPos) < bhTheta)
 		{
 			accelerationAccum += calculate_acceleration(currPos, currMass, BHNode_massCenter[currNodeIdx], BHNode_mass[currNodeIdx]);
 		}
@@ -67,6 +75,11 @@ __kernel void gravity (
 			{
 				stack[stackIdx] = currNode_children[child];
 				++stackIdx;
+				if(stackIdx >= 2048)
+				{
+					accelaration[currIdx] = 1000000000.0;
+					return;
+				}
 			}
 		}
 	}

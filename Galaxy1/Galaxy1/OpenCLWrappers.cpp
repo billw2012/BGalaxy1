@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <cassert>
 
 namespace opencl {;
 
@@ -50,6 +51,8 @@ std::string get_device_info<std::string>(cl_device_id device, cl_device_info par
 	return std::string(&tmpArray[0]);
 }
 
+#define CL_DEVICE_PARTITION_MAX_SUB_DEVICES 0x1043
+#define CL_DEVICE_PARTITION_PROPERTIES 0x1044 
 CLDevice::CLDevice(cl_device_id device_, cl_context context_, cl_command_queue queue_) 
 	: device(device_), context(context_), queue(queue_)
 {
@@ -73,6 +76,10 @@ CLDevice::CLDevice(cl_device_id device_, cl_context context_, cl_command_queue q
 	maxWorkItemDimensions = get_device_info<cl_uint>(device,			CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS);
 	maxWorkItemSizes.resize(maxWorkItemDimensions);
 	get_device_info_presize_array(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, maxWorkItemSizes);
+
+	maxSubDevices		= get_device_info<cl_uint>(device,				CL_DEVICE_PARTITION_MAX_SUB_DEVICES);
+	subDevicePartitionProperties.resize(3);
+	get_device_info_presize_array(device, CL_DEVICE_PARTITION_PROPERTIES, subDevicePartitionProperties);
 }
 
 void CLDevice::enqueue_barrier()
@@ -265,39 +272,31 @@ bool CLProgram::create_kernal(const std::string& kernelFnName)
 	return true;
 }
 
+#define AUTO_DIST
+
 std::vector<CLProgram::CLExecutionPtr> CLProgram::enqueue_work(const CLDevice& device, const std::string& kernelFnName,
-	size_t globalWorkSize)
+	size_t globalWorkSize, size_t localWorkSize)
 {
 	std::vector<CLProgram::CLExecutionPtr> executions;
 	KernalMap::const_iterator fItr = _kernals.find(kernelFnName);
 	if(fItr == _kernals.end())
 		return executions;
 
-	size_t workGroupSize = device.maxWorkItemSizes[0] - 1;
-	div_t workDiv = ::div((int)globalWorkSize, (int)workGroupSize);
-
-	size_t globalWorkOffset = 0;
-	//for(int idx = 0; idx < workDiv.quot; ++idx, globalWorkOffset += workGroupSize)
-	//{
-	//	cl_event revent;
-	//	CLExecutionPtr execution(new CLExecution(globalWorkOffset, globalWorkSize, workGroupSize));
-	//	_lastError = ::clEnqueueNDRangeKernel(device.queue, fItr->second.kernel, 1, 
-	//		&(execution->globalWorkOffset), &(execution->globalWorkSize), &(execution->localWorkSize),
-	//		0, NULL, &(execution->event));
-	//	if(_lastError != CL_SUCCESS)
-	//	{
-	//		std::cout << "::clEnqueueNDRangeKernel error." << std::endl;
-	//		return executions;
-	//	}
-	//	add_event(execution);
-	//	executions.push_back(execution);
-	//}
-
-	cl_event revent;
-	CLExecutionPtr execution(new CLExecution(globalWorkOffset, globalWorkSize, globalWorkSize/*workDiv.rem*/));
+	if(globalWorkSize < localWorkSize)
+	{
+		localWorkSize = globalWorkSize;
+	}
+	else
+	{
+		div_t divRes = ::div((int)globalWorkSize, (int)localWorkSize);
+		if(divRes.rem == 0)
+			globalWorkSize = localWorkSize * divRes.quot;
+		else
+			globalWorkSize = localWorkSize * (divRes.quot + 1);
+	}
+	CLExecutionPtr execution(new CLExecution(0, globalWorkSize, localWorkSize));
 	_lastError = ::clEnqueueNDRangeKernel(device.queue, fItr->second.kernel, 1, 
-		/*&(execution->globalWorkOffset)*/NULL, &(execution->globalWorkSize), NULL/*&(execution->localWorkSize)*/,
-		0, NULL, &(execution->event));
+		NULL, &execution->globalWorkSize, &execution->localWorkSize, 0, NULL, &(execution->event));
 	if(_lastError != CL_SUCCESS)
 	{
 		std::cout << "::clEnqueueNDRangeKernel error." << std::endl;
@@ -323,6 +322,7 @@ bool CLProgram::commands_complete()
 		::clGetEventInfo(_executions[idx]->event, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &status, NULL);
 		if(status == CL_COMPLETE)
 		{
+			::clReleaseEvent(_executions[idx]->event);
 			_executions.erase(_executions.begin() + idx);
 			--idx;
 		}
@@ -371,6 +371,7 @@ bool CLEventSet::commands_complete()
 		::clGetEventInfo(_activeCommands[idx], CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &status, NULL);
 		if(status == CL_COMPLETE)
 		{
+			::clReleaseEvent(_activeCommands[idx]);
 			_activeCommands.erase(_activeCommands.begin() + idx);
 			--idx;
 		}

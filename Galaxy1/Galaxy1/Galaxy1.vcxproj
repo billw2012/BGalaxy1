@@ -181,6 +181,9 @@
     <ProjectReference Include="..\..\MyLibs\Ugly\Ugly.vcxproj">
       <Project>{e8af24e3-b9ba-4b7c-bb92-f23226111761}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\MyLibs\Utils\Utils.vcxproj">
+      <Project>{7fe35900-303e-42fe-9877-5d3ce3591579}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Data\CL\gravity.cl" />
