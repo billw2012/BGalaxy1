@@ -31,8 +31,8 @@ void ProcessQueue::run_processes_thread()
 
 	while(1)
 	{
-		DWORD waitResult = WaitHandle::wait(waitHandles);
-		if(waitResult == WAIT_OBJECT_0)
+		size_t waitResult = WaitHandle::wait(waitHandles);
+		if(waitResult == WaitHandle::OBJECT_0)
 			break;
 		ProcessCommand nextCommand;
 		{

@@ -13,27 +13,33 @@ struct GalaxySim : public QObject
 		;
 
 public:
+	GalaxySim();
 
 	void init_writing(const std::string& outputFile);
 
-	bool load_kernel(opencl::CLProgram& program, const std::string& file, const std::string& kernel);
+	bool init();
 
-	bool init(size_t bodyCount);
+	bool resize(size_t bodyCount);
+
+	void reset() { resize(0); _currBodyOffset = 0; }
 
 	struct SimType { enum type {
 		Galaxy,
 		Universe
 	};};
 
-	void initialize_galaxy(double minMass, double maxMass, double space);
-	void initialize_universe(double minMass, double maxMass, 
+	void initialize_galaxy(const math::Vector3d& center, const math::Vector3d& velocity, size_t bodies, double minMass, double maxMass, double space);
+	void initialize_universe(const math::Vector3d& center, size_t bodies, double minMass, double maxMass, 
 		double size, double initVel);
-	void initialize_bodies(double minMass, double maxMass, 
-		double size, double initVel, SimType::type simType);
 
 	void iterate(double t);
 
 private:
+	bool load_kernel(opencl::CLProgram& program, const std::string& file, const std::string& kernel);
+
+	void initialize_bodies(const math::Vector3d& center, const math::Vector3d& velocity, size_t bodies, double minMass, double maxMass, 
+		double size, double initVel, SimType::type simType);
+
 	void output_image();
 
 	void iterate_move( double t );
@@ -43,8 +49,6 @@ private:
 	std::vector<opencl::CLDevice> devices;
 	typedef opencl::OpenCLBuffer<cl_double3> OpenCLBufferD3;
 	typedef opencl::OpenCLBuffer<cl_double> OpenCLBufferD;
-	OpenCLBufferD3 position, acceleration, velocity, minmax;
-	OpenCLBufferD mass;
 
 signals:
 	void new_image_available(QImage image);
@@ -62,5 +66,9 @@ private:
 	opencl::CLDevice partitionedDevices[2];
 	opencl::CLDevice* activeDevice;
 
+	OpenCLBufferD3 _position, _acceleration, _velocity;
+	OpenCLBufferD _mass;
+
+	size_t _currBodyOffset;
 };
 #endif // GalaxySim_h__

@@ -73,9 +73,6 @@
     <ClInclude Include="QtUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="wait_handle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="temp.h">
       <Filter>Header Files</Filter>
     </ClInclude>

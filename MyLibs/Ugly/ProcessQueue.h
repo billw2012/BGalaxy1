@@ -6,7 +6,7 @@
 #include <QString>
 #include <QStringList>
 #include <boost/thread.hpp>
-#include "wait_handle.h"
+#include "../Utils/WaitHandle.h"
 #include <deque>
 
 namespace ugly {;

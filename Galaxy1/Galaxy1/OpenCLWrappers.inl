@@ -29,9 +29,14 @@ OpenCLBuffer<ValTy_>::~OpenCLBuffer()
 }
 
 template < class ValTy_ >
-bool OpenCLBuffer<ValTy_>::create(size_t elements)
+bool OpenCLBuffer<ValTy_>::resize(size_t elements)
 {
-	destroy();
+	if(_handle != NULL)
+	{
+		wait_all();
+		::clReleaseMemObject(_handle);
+		_handle = NULL;
+	}
 	_data.resize(elements);
 	_handle = ::clCreateBuffer(_context, _flags, sizeof(value_type) * elements, NULL, &_lastError);
 	return _handle != NULL;

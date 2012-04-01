@@ -93,6 +93,9 @@
     <CustomBuild Include="GalaxySim.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="GalaxyWidget.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GeneratedFiles\ui_galaxy1.h">
@@ -106,6 +109,9 @@
     </ClInclude>
     <ClInclude Include="galaxy_c.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_GalaxyWidget.h">
+      <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

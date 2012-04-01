@@ -21,7 +21,7 @@ Dave McPherson (davemm)   11-March-98
 
 #include <windows.h>
 
-#include "wait_handle.h"
+#include "../Utils/WaitHandle.h"
 
 //#pragma comment(lib, "User32.lib")
 

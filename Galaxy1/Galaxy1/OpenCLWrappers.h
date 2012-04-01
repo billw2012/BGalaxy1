@@ -110,7 +110,7 @@ struct OpenCLBuffer : public CLEventSet
 
 	bool init(typename Flags::type flags);
 
-	bool create(size_t elements);
+	bool resize(size_t elements);
 	void destroy();
 
 	cl_event enqueue_read(const CLDevice& device, bool blocking = false);
@@ -282,18 +282,15 @@ typename opencl::OpenCLBuffer<ValTy_>::Flags::type operator|(const typename open
 
 inline cl_double3 convert_my_vec3(const math::Vector3d& myVec)
 {
-	cl_double3 tv;
-	for(size_t idx = 0; idx < 3; ++idx)
-		tv.s[idx] = myVec[idx];
+	cl_double3 tv = {myVec.x, myVec.y, myVec.z, 0.0};
+	//for(size_t idx = 0; idx < 3; ++idx)
+	//	tv.s[idx] = myVec[idx];
 	return tv;
 }
 
 inline math::Vector3d convert_to_my_vec3(const cl_double3& vec)
 {
-	math::Vector3d myVec;
-	for(size_t idx = 0; idx < 3; ++idx)
-		myVec(idx) = vec.s[idx];
-	return myVec;
+	return math::Vector3d(vec.s[0], vec.s[1], vec.s[2]);
 }
 
 

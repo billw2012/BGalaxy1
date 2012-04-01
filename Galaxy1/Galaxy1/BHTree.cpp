@@ -13,7 +13,7 @@ void BHTree::evaluate_node_mass( const BHNodePtr& node,
 
 	Vector3d mrsum = Vector3d::Zero;
 	double msum = 0.0;
-	double averageFac = 1.0 / (double)node->tempIndexes.size();
+	//double averageFac = 1.0 / (double)node->tempIndexes.size();
 	std::for_each(node->tempIndexes.begin(), node->tempIndexes.end(), [&](size_t idx)
 	{
 		mrsum += (math::Vector3d(positions[idx].s[0], positions[idx].s[1], positions[idx].s[2]) * masses[idx]/* * averageFac*/);
@@ -121,11 +121,11 @@ void BHTree::build( const opencl::OpenCLBuffer<cl_double3>::vector_type& positio
 	}
 
 	// copy data to the cl structures
-	nodes_children	.create(linearTree.size() * 8);
-	nodes_massCenter.create(linearTree.size());
-	nodes_mass		.create(linearTree.size());
-	nodes_nnn		.create(linearTree.size());
-	nodes_ppp		.create(linearTree.size());
+	nodes_children	.resize(linearTree.size() * 8);
+	nodes_massCenter.resize(linearTree.size());
+	nodes_mass		.resize(linearTree.size());
+	nodes_nnn		.resize(linearTree.size());
+	nodes_ppp		.resize(linearTree.size());
 	for(size_t idx = 0; idx < linearTree.size(); ++idx)
 	{
 		BHNodePtr currNode = linearTree[idx];
