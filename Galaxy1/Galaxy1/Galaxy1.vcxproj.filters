@@ -79,6 +79,15 @@
     <ClCompile Include="GeneratedFiles\Kernel Debug\moc_galaxy1.cpp">
       <Filter>Generated Files\Kernel Debug</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_GalaxySimGLWidget.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Kernel Debug\moc_GalaxySimGLWidget.cpp">
+      <Filter>Generated Files\Kernel Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_GalaxySimGLWidget.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="galaxy1.h">
@@ -95,6 +104,9 @@
     </CustomBuild>
     <CustomBuild Include="GalaxyWidget.ui">
       <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="GalaxySimGLWidget.h">
+      <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

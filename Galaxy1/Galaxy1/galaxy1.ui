@@ -14,9 +14,9 @@
    <string>Galaxy1</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_2">
+   <layout class="QVBoxLayout" name="verticalLayout_5">
     <item>
-     <widget class="UglyGraphicsView" name="graphicsView"/>
+     <widget class="GalaxySimGLWidget" name="glWidget" native="true"/>
     </item>
    </layout>
   </widget>
@@ -93,8 +93,14 @@
             <property name="suffix">
              <string> ly</string>
             </property>
+            <property name="decimals">
+             <number>2</number>
+            </property>
+            <property name="minimum">
+             <double>-1000000.000000000000000</double>
+            </property>
             <property name="maximum">
-             <double>1000000000.000000000000000</double>
+             <double>1000000.000000000000000</double>
             </property>
             <property name="singleStep">
              <double>100.000000000000000</double>
@@ -109,8 +115,14 @@
             <property name="suffix">
              <string> ly</string>
             </property>
+            <property name="decimals">
+             <number>2</number>
+            </property>
+            <property name="minimum">
+             <double>-1000000.000000000000000</double>
+            </property>
             <property name="maximum">
-             <double>1000000000.000000000000000</double>
+             <double>1000000.000000000000000</double>
             </property>
             <property name="singleStep">
              <double>100.000000000000000</double>
@@ -125,8 +137,11 @@
             <property name="suffix">
              <string> ly</string>
             </property>
+            <property name="minimum">
+             <double>-1000000.000000000000000</double>
+            </property>
             <property name="maximum">
-             <double>1000000000.000000000000000</double>
+             <double>1000000.000000000000000</double>
             </property>
             <property name="singleStep">
              <double>100.000000000000000</double>
@@ -152,8 +167,14 @@
             <property name="suffix">
              <string> ly/y</string>
             </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-10.000000000000000</double>
+            </property>
             <property name="maximum">
-             <double>1000000000.000000000000000</double>
+             <double>10.000000000000000</double>
             </property>
             <property name="singleStep">
              <double>100.000000000000000</double>
@@ -168,8 +189,14 @@
             <property name="suffix">
              <string> ly/y</string>
             </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-10.000000000000000</double>
+            </property>
             <property name="maximum">
-             <double>1000000000.000000000000000</double>
+             <double>10.000000000000000</double>
             </property>
             <property name="singleStep">
              <double>100.000000000000000</double>
@@ -184,8 +211,14 @@
             <property name="suffix">
              <string> ly/y</string>
             </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-10.000000000000000</double>
+            </property>
             <property name="maximum">
-             <double>1000000000.000000000000000</double>
+             <double>10.000000000000000</double>
             </property>
             <property name="singleStep">
              <double>100.000000000000000</double>
@@ -265,6 +298,9 @@
             <property name="maximum">
              <number>300</number>
             </property>
+            <property name="value">
+             <number>10</number>
+            </property>
            </widget>
           </item>
          </layout>
@@ -303,7 +339,7 @@
           <x>0</x>
           <y>0</y>
           <width>184</width>
-          <height>396</height>
+          <height>292</height>
          </rect>
         </property>
        </widget>
@@ -359,9 +395,10 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>UglyGraphicsView</class>
-   <extends>QGraphicsView</extends>
-   <header>Ugly/uglygraphicsview.h</header>
+   <class>GalaxySimGLWidget</class>
+   <extends>QWidget</extends>
+   <header>GalaxySimGLWidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

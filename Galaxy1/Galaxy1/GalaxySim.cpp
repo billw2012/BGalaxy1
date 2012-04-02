@@ -13,9 +13,6 @@ using namespace opencl;
 #define MOVE_PROGRAM	"../Data/CL/move.cl"
 #define MOVE_KERNEL		"move"
 
-#define IMAGE_WIDTH		1024
-#define IMAGE_HEIGHT	1024
-
 #define DEFAULT_DEVICE_INDEX 0
 #define EXPORT_IMAGES
 #define EXPORT_FRAME_INTERVAL 1
@@ -26,19 +23,10 @@ GalaxySim::GalaxySim()
 	:
 	_error(false),
 	_bodyCount(0),
-	xOffset(0.0), yOffset(0.0), 
-	xScale(0.0), yScale(0.0), 
-	xRange(0.0), yRange(0.0),
-	massOffset(0.0), massScale(0.0), 
-	bhTheta(0.0), _currBodyOffset(0)
+	bhTheta(0.0), _currBodyOffset(0),
+	_iteration(0)
 {
 
-}
-
-void GalaxySim::init_writing(const std::string& outputFile)
-{
-	// CV_FOURCC('x','v','i','d')
-	_video.open(outputFile, CV_FOURCC('m','p','e','g'), 30.0, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
 }
 
 bool GalaxySim::load_kernel( CLProgram& program, const std::string& file, const std::string& kernel )
@@ -166,9 +154,6 @@ void GalaxySim::initialize_bodies(const math::Vector3d& center, const math::Vect
 		-1, 0,  1,
 		0,  0,  1);
 
-	massOffset = minMass * 0.5;
-	massScale = 255.0 / (maxMass * 0.5 - minMass);
-
 	resize(_currBodyOffset + bodies);
 
 	bhTheta = 5.0;
@@ -223,13 +208,6 @@ void GalaxySim::initialize_bodies(const math::Vector3d& center, const math::Vect
 			currBounds.expand(convert_to_my_vec3(_position[idx]));
 		}
 
-		xOffset = currBounds.min().x * 1.5;
-		yOffset = currBounds.min().y * 1.5;
-		xRange = currBounds.extents().x * 1.5;
-		yRange = currBounds.extents().y * 1.5;
-		xScale = static_cast<double>(IMAGE_WIDTH - 1) / xRange;
-		yScale = static_cast<double>(IMAGE_HEIGHT - 1) / yRange;
-
 		iterate_gravity();
 
 #if defined(USE_OPENCL)
@@ -251,29 +229,19 @@ void GalaxySim::initialize_bodies(const math::Vector3d& center, const math::Vect
 		_velocity.enqueue_write(*activeDevice, true);
 #endif
 	}
-	else
-	{
-		xOffset = -size * 0.5;
-		yOffset = -size * 0.5;
-		xRange = size;
-		yRange = size;
-		xScale = static_cast<double>(IMAGE_WIDTH - 1) / xRange;
-		yScale = static_cast<double>(IMAGE_HEIGHT - 1) / yRange;
-	}
 
 	_currBodyOffset += bodies;
 }
 
 void GalaxySim::iterate( double t )
 {
-	static size_t sIteration = 0;
-
 	iterate_gravity();
 	iterate_move(t);
 	output_image();
+	output_data();
 
-	std::cout << "Iteration " << sIteration << std::fixed << ". X Range = " << yRange << ", Y Range = " << yRange << std::endl;
-	++ sIteration;
+	std::cout << "Iteration " << _iteration << std::endl;
+	++ _iteration;
 }
 
 void GalaxySim::iterate_gravity()
@@ -312,33 +280,57 @@ void GalaxySim::iterate_move( double t )
 
 void GalaxySim::output_image()
 {
-	QImage output(IMAGE_WIDTH, IMAGE_HEIGHT, QImage::Format_RGB888);
+	//QImage output(IMAGE_WIDTH, IMAGE_HEIGHT, QImage::Format_RGB888);
 	const OpenCLBufferD3::vector_type& positionVals = _position.get_data();
-	output.fill(Qt::black);
+	//output.fill(Qt::black);
 
 	currBounds.reset();
 	math::Vector3d avPos;
 	for(size_t idx = 0; idx < positionVals.size(); ++idx)
 	{
-		int x = (positionVals[idx].s[0] - xOffset) * xScale;
-		int y = (positionVals[idx].s[1] - yOffset) * yScale;
-		unsigned char c = (_mass[idx] - massOffset) * massScale;
-		if(x >= 0 && x < IMAGE_WIDTH && y >= 0 && y < IMAGE_HEIGHT)
-		{
-			output.setPixel(x, y, (c << 16) + (c << 8) + c);
-		}
+		//int x = (positionVals[idx].s[0] - xOffset) * xScale;
+		//int y = (positionVals[idx].s[1] - yOffset) * yScale;
+		//unsigned char c = (_mass[idx] - massOffset) * massScale;
+		//if(x >= 0 && x < IMAGE_WIDTH && y >= 0 && y < IMAGE_HEIGHT)
+		//{
+		//	output.setPixel(x, y, (c << 16) + (c << 8) + c);
+		//}
 		currBounds.expand(convert_to_my_vec3(positionVals[idx]));
 		avPos += convert_to_my_vec3(positionVals[idx]) / (double)_bodyCount;
 	}
-	xOffset = avPos.x - xRange * 0.5;
-	yOffset = avPos.y - yRange * 0.5;
 
-	if(_video.isOpened())
+	emit new_data_available();
+}
+
+void GalaxySim::output_data()
+{
+	boost::mutex::scoped_lock scopedLock(_dataMutex);
+	_data.clear();
+	const OpenCLBufferD3::vector_type& positionVals = _position.get_data();
+	for(size_t idx = 0; idx < positionVals.size(); ++idx)
 	{
-		cv::Mat img(IMAGE_WIDTH, IMAGE_HEIGHT, CV_8UC3);
-		assert(output.byteCount() == img.total() * img.elemSize());
-		memcpy_s(img.ptr(), img.total() * img.elemSize(), output.bits(), output.byteCount());
-		_video << img;
+		_data.push_back(math::Vector3d(positionVals[idx].s[0], positionVals[idx].s[1], positionVals[idx].s[2]));
 	}
-	emit new_image_available(output);
+}
+
+void GalaxySim::lock_data() const
+{
+	_dataMutex.lock();
+}
+
+const std::vector< math::Vector3d >& GalaxySim::get_data() const
+{
+	return _data;
+}
+
+void GalaxySim::unlock_data() const
+{
+	_dataMutex.unlock();
+}
+
+void GalaxySim::reset()
+{
+	resize(0); 
+	_currBodyOffset = 0; 
+	_iteration = 0;
 }

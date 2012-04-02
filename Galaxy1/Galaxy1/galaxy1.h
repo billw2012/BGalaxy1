@@ -4,6 +4,7 @@
 #include <QtGui/QMainWindow>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
+#include <QTimer>
 #include "ui_galaxy1.h"
 
 #include "Ugly/QDebugStream.h"
@@ -23,21 +24,27 @@ public:
 
 private slots:
 	void idle_processing();
-	void new_image_available(QImage);
+	void new_data_available();
 	void processButton_clicked(bool);
 
 	void newGalaxyAddButton_clicked(bool);
 	void resetButton_clicked(bool);
 
+	void draw_frame() const;
+
+private:
+	void init_writing(const std::string& outputFile);
+
 private:
 	Ui::Galaxy1Class ui;
 	QDebugStream* debugStream;
-	//QTimer* idleTimer;
+	QTimer* _idleTimer;
 	boost::thread executeThread;
 	GalaxySim sim;
-	QGraphicsScene* scene;
-	QGraphicsPixmapItem* lastImageItem;
+	//QGraphicsScene* scene;
+	//QGraphicsPixmapItem* lastImageItem;
 	WaitHandle _terminateSim;
+	cv::VideoWriter _video;
 };
 
 #endif // GALAXY1_H

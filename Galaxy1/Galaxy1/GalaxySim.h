@@ -3,7 +3,13 @@
 
 #include "BHTree.h"
 #include <QImage>
+#include <QList>
+#include <QVector3D>
 #include "opencv2/highgui/highgui.hpp"
+#include "boost/thread/mutex.hpp"
+
+#define AU_PER_LIGHTYEAR			63239.6717
+#define SOLAR_MASS_IN_EARTH_MASS	332918.215
 
 // http://en.wikipedia.org/wiki/Barnes-Hut_simulation
 //
@@ -21,7 +27,7 @@ public:
 
 	bool resize(size_t bodyCount);
 
-	void reset() { resize(0); _currBodyOffset = 0; }
+	void reset();
 
 	struct SimType { enum type {
 		Galaxy,
@@ -34,6 +40,10 @@ public:
 
 	void iterate(double t);
 
+	void lock_data() const;
+	const std::vector< math::Vector3d >& get_data() const;
+	void unlock_data() const;
+
 private:
 	bool load_kernel(opencl::CLProgram& program, const std::string& file, const std::string& kernel);
 
@@ -41,6 +51,7 @@ private:
 		double size, double initVel, SimType::type simType);
 
 	void output_image();
+	void output_data();
 
 	void iterate_move( double t );
 
@@ -51,18 +62,15 @@ private:
 	typedef opencl::OpenCLBuffer<cl_double> OpenCLBufferD;
 
 signals:
-	void new_image_available(QImage image);
+	void new_data_available();
 
 private:
 	opencl::CLProgram gravityProgram, moveProgram;
 	bool _error;
 	size_t _bodyCount;
-	double xOffset, yOffset,  xScale, yScale, xRange, yRange;
-	double massOffset, massScale;
 	double bhTheta;
 	BHTree bhTree;
 	math::AABBd currBounds;
-	cv::VideoWriter _video;
 	opencl::CLDevice partitionedDevices[2];
 	opencl::CLDevice* activeDevice;
 
@@ -70,5 +78,10 @@ private:
 	OpenCLBufferD _mass;
 
 	size_t _currBodyOffset;
+
+	mutable boost::mutex _dataMutex;
+	std::vector< math::Vector3d > _data;
+
+	size_t _iteration;
 };
 #endif // GalaxySim_h__
