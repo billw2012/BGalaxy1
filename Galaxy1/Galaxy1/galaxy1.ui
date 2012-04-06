@@ -290,7 +290,7 @@
              </sizepolicy>
             </property>
             <property name="suffix">
-             <string>000</string>
+             <string> (000)</string>
             </property>
             <property name="minimum">
              <number>1</number>

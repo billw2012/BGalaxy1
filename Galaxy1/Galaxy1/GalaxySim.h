@@ -7,12 +7,12 @@
 #include <QVector3D>
 #include "opencv2/highgui/highgui.hpp"
 #include "boost/thread/mutex.hpp"
-
-#define AU_PER_LIGHTYEAR			63239.6717
-#define SOLAR_MASS_IN_EARTH_MASS	332918.215
+#include "Utils/HRTimer.h"
 
 // http://en.wikipedia.org/wiki/Barnes-Hut_simulation
 //
+
+
 struct GalaxySim : public QObject
 {
 	Q_OBJECT 
@@ -34,32 +34,32 @@ public:
 		Universe
 	};};
 
-	void initialize_galaxy(const math::Vector3d& center, const math::Vector3d& velocity, size_t bodies, double minMass, double maxMass, double space);
-	void initialize_universe(const math::Vector3d& center, size_t bodies, double minMass, double maxMass, 
-		double size, double initVel);
+	void initialize_galaxy(const pf_Vector3& center, const pf_Vector3& velocity, size_t bodies, pf_real minMass, pf_real maxMass, pf_real space);
+	void initialize_universe(const pf_Vector3& center, size_t bodies, pf_real minMass, pf_real maxMass, 
+		pf_real size, pf_real initVel);
 
-	void iterate(double t);
+	void iterate(pf_real t);
 
 	void lock_data() const;
-	const std::vector< math::Vector3d >& get_data() const;
+	const std::vector< pf_Vector3 >& get_data() const;
 	void unlock_data() const;
 
 private:
 	bool load_kernel(opencl::CLProgram& program, const std::string& file, const std::string& kernel);
 
-	void initialize_bodies(const math::Vector3d& center, const math::Vector3d& velocity, size_t bodies, double minMass, double maxMass, 
-		double size, double initVel, SimType::type simType);
+	void initialize_bodies(const pf_Vector3& center, const pf_Vector3& velocity, size_t bodies, pf_real minMass, pf_real maxMass, 
+		pf_real size, pf_real initVel, SimType::type simType);
 
 	void output_image();
 	void output_data();
 
-	void iterate_move( double t );
+	void iterate_move( pf_real t );
 
 	void iterate_gravity();
 
 	std::vector<opencl::CLDevice> devices;
-	typedef opencl::OpenCLBuffer<cl_double3> OpenCLBufferD3;
-	typedef opencl::OpenCLBuffer<cl_double> OpenCLBufferD;
+	typedef opencl::OpenCLBuffer<cl_real3> OpenCLBufferD3;
+	typedef opencl::OpenCLBuffer<cl_real> OpenCLBufferD;
 
 signals:
 	void new_data_available();
@@ -68,9 +68,9 @@ private:
 	opencl::CLProgram gravityProgram, moveProgram;
 	bool _error;
 	size_t _bodyCount;
-	double bhTheta;
+	pf_real bhTheta;
 	BHTree bhTree;
-	math::AABBd currBounds;
+	math::AABB<pf_real> currBounds;
 	opencl::CLDevice partitionedDevices[2];
 	opencl::CLDevice* activeDevice;
 
@@ -80,8 +80,10 @@ private:
 	size_t _currBodyOffset;
 
 	mutable boost::mutex _dataMutex;
-	std::vector< math::Vector3d > _data;
+	std::vector< pf_Vector3 > _data;
 
 	size_t _iteration;
+	HRTimer _timer;
+	unsigned int _lastBHTreeCalcTime, _lastCalcGravityTime, _lastCalcMoveTime;
 };
 #endif // GalaxySim_h__

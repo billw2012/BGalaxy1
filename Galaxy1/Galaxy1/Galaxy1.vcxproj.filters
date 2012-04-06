@@ -139,5 +139,8 @@
     <None Include="..\Data\CL\move.cl">
       <Filter>CL</Filter>
     </None>
+    <None Include="..\Data\CL\gravity_basic.cl">
+      <Filter>CL</Filter>
+    </None>
   </ItemGroup>
 </Project>

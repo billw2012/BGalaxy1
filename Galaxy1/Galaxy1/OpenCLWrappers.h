@@ -17,6 +17,21 @@
 //#include <boost/mpl/logical.hpp>
 //#include <boost/type_traits.hpp>
 
+#if defined(GALAXY_DOUBLE_PRECISION)
+typedef cl_double  cl_real;
+typedef cl_double2 cl_real2;
+typedef cl_double3 cl_real3;
+typedef cl_double4 cl_real4;
+typedef double pf_real;
+#else
+typedef cl_float  cl_real;
+typedef cl_float2 cl_real2;
+typedef cl_float3 cl_real3;
+typedef cl_float4 cl_real4;
+typedef float pf_real;
+#endif
+typedef math::Vector3 < pf_real > pf_Vector3;
+
 namespace opencl {;
 
 struct CLDevice
@@ -151,7 +166,7 @@ struct CLProgram : public CLEventSet
 	{
 		ProgramOptions();
 		ProgramOptions& add_include_dir(const std::string& includeDir);
-		ProgramOptions& add_macro(const std::string& name, const std::string& value);
+		ProgramOptions& add_macro(const std::string& name, const std::string& value = std::string());
 		ProgramOptions& debugging();
 
 		const char* c_str() const;
@@ -190,7 +205,7 @@ struct CLProgram : public CLEventSet
 
 	typedef std::shared_ptr<CLExecution> CLExecutionPtr;
 
-	std::vector<CLExecutionPtr> enqueue_work(const CLDevice& device, const std::string& kernelFnName, size_t globalWorkSize, size_t localWorkSize = 64);
+	std::vector<CLExecutionPtr> enqueue_work(const CLDevice& device, const std::string& kernelFnName, size_t globalWorkSize, size_t localWorkSize);
 
 	virtual bool clear_complete();
 	virtual bool commands_complete();
@@ -280,17 +295,17 @@ typename opencl::OpenCLBuffer<ValTy_>::Flags::type operator|(const typename open
 	return static_cast<typename opencl::OpenCLBuffer<ValTy_>::Flags::type>(static_cast<size_t>(lhs) | static_cast<size_t>(rhs));
 }
 
-inline cl_double3 convert_my_vec3(const math::Vector3d& myVec)
+inline cl_real3 convert_my_vec3(const pf_Vector3& myVec)
 {
-	cl_double3 tv = {myVec.x, myVec.y, myVec.z, 0.0};
+	cl_real3 tv = {myVec.x, myVec.y, myVec.z, 0.0};
 	//for(size_t idx = 0; idx < 3; ++idx)
 	//	tv.s[idx] = myVec[idx];
 	return tv;
 }
 
-inline math::Vector3d convert_to_my_vec3(const cl_double3& vec)
+inline pf_Vector3 convert_to_my_vec3(const cl_real3& vec)
 {
-	return math::Vector3d(vec.s[0], vec.s[1], vec.s[2]);
+	return pf_Vector3(vec.s[0], vec.s[1], vec.s[2]);
 }
 
 

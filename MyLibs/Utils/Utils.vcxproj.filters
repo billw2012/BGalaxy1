@@ -21,6 +21,9 @@
     <ClInclude Include="WaitHandle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HRTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WaitHandle.cpp">

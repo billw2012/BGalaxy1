@@ -19,6 +19,8 @@ using namespace opencl;
 
 #define USE_OPENCL
 
+#define WORKGROUP_SIZE 128
+
 GalaxySim::GalaxySim()
 	:
 	_error(false),
@@ -31,11 +33,15 @@ GalaxySim::GalaxySim()
 
 bool GalaxySim::load_kernel( CLProgram& program, const std::string& file, const std::string& kernel )
 {
+	CLProgram::ProgramOptions options;
+#if defined(GALAXY_DOUBLE_PRECISION)
+	options.add_macro("GALAXY_DOUBLE_PRECISION");
+#endif
 	bool buildSuccess = program.create(file, 
 #if defined(KERNEL_DEBUGGING)
-		CLProgram::ProgramOptions().debugging(), *activeDevice
+		options.debugging(), *activeDevice
 #else
-		CLProgram::ProgramOptions()
+		options
 #endif
 		);
 
@@ -125,29 +131,29 @@ bool GalaxySim::init()
 	return true;
 }
 
-void GalaxySim::initialize_galaxy(const math::Vector3d& center, const math::Vector3d& velocity, size_t bodies, double minMass, double maxMass, double space)
+void GalaxySim::initialize_galaxy(const pf_Vector3& center, const pf_Vector3& velocity, size_t bodies, pf_real minMass, pf_real maxMass, pf_real space)
 {
 	initialize_bodies(center, velocity, bodies, minMass, maxMass, space, 0.0, SimType::Galaxy);
 }
 
-void GalaxySim::initialize_universe(const math::Vector3d& center, size_t bodies, double minMass, double maxMass, 
-	double size, double initVel)
+void GalaxySim::initialize_universe(const pf_Vector3& center, size_t bodies, pf_real minMass, pf_real maxMass, 
+	pf_real size, pf_real initVel)
 {
-	initialize_bodies(center, math::Vector3d::Zero, bodies, minMass, maxMass, size, initVel, SimType::Universe);
+	initialize_bodies(center, pf_Vector3::Zero, bodies, minMass, maxMass, size, initVel, SimType::Universe);
 }
 
 #define PI_VAL 3.14159265
 
 #include "galaxy_c.h"
 
-void GalaxySim::initialize_bodies(const math::Vector3d& center, const math::Vector3d& velocity, size_t bodies, double minMass, double maxMass, double size, 
-	double initVel, SimType::type simType)
+void GalaxySim::initialize_bodies(const pf_Vector3& center, const pf_Vector3& velocity, size_t bodies, pf_real minMass, pf_real maxMass, pf_real size, 
+	pf_real initVel, SimType::type simType)
 {
 	boost::random::taus88 rng;
-	boost::random::uniform_real_distribution<double> massRange(minMass, maxMass);
-	boost::random::uniform_real_distribution<double> angleRange(0.0, 2 * PI_VAL);
-	boost::random::uniform_real_distribution<double> zrRange(-1.0, 1.0);
-	boost::random::exponential_distribution<double> posRange(1.2);
+	boost::random::uniform_real_distribution<pf_real> massRange(minMass, maxMass);
+	boost::random::uniform_real_distribution<pf_real> angleRange(0.0, 2 * PI_VAL);
+	boost::random::uniform_real_distribution<pf_real> zrRange(-1.0, 1.0);
+	boost::random::exponential_distribution<pf_real> posRange(1.2);
 	using namespace math;
 	Matrix3d rot(
 		0,  1,  1, 
@@ -156,36 +162,36 @@ void GalaxySim::initialize_bodies(const math::Vector3d& center, const math::Vect
 
 	resize(_currBodyOffset + bodies);
 
-	bhTheta = 5.0;
+	bhTheta = 3.0;
 
 #if defined(USE_OPENCL)
-	gravityProgram.bind_parameter(GRAVITY_KERNEL, 0, (cl_double)bhTheta);
+	gravityProgram.bind_parameter(GRAVITY_KERNEL, 0, (cl_real)bhTheta);
 #endif
 
 	for(size_t idx = _currBodyOffset; idx < bodies + _currBodyOffset; ++idx)
 	{
 		_mass[idx] = massRange(rng);
-		cl_double4& currPos = _position[idx];
-		cl_double4& currVel = _velocity[idx];
+		cl_real4& currPos = _position[idx];
+		cl_real4& currVel = _velocity[idx];
 
 		if(simType == SimType::Galaxy)
 		{
-			Vector3d currPosT;
+			pf_Vector3 currPosT;
 
 			do 
 			{
-				double distance = posRange(rng) * size * 0.2;
-				double angle = angleRange(rng);
-				double x = sin(angle);
-				double y = cos(angle);
-				currPosT = Vector3d(x * distance, y * distance, zrRange(rng) * size * 0.01);
+				pf_real distance = posRange(rng) * size * 0.2;
+				pf_real angle = angleRange(rng);
+				pf_real x = sin(angle);
+				pf_real y = cos(angle);
+				currPosT = pf_Vector3(x * distance, y * distance, zrRange(rng) * size * 0.01);
 			} while (currPosT.length() > size);
 			currPos = convert_my_vec3(currPosT + center);
-			currVel = convert_my_vec3(Vector3d::Zero);
+			currVel = convert_my_vec3(pf_Vector3::Zero);
 		}
 		else
 		{
-			Vector3d rpos(zrRange(rng), zrRange(rng), zrRange(rng));
+			pf_Vector3 rpos(zrRange(rng), zrRange(rng), zrRange(rng));
 			rpos.normalize();
 			currPos = convert_my_vec3(rpos);
 			currVel = convert_my_vec3(rpos * initVel);
@@ -218,11 +224,11 @@ void GalaxySim::initialize_bodies(const math::Vector3d& center, const math::Vect
 		for(size_t idx = _currBodyOffset; idx < bodies + _currBodyOffset; ++idx)
 		{
 			// escape velocity = - sqrt(2 * acceleration_due_to_gravity * distance_from_gravitational_center)
-			Vector3d currAccelT(convert_to_my_vec3(_acceleration[idx]));
-			Vector3d currPosT(convert_to_my_vec3(_position[idx]));
-			double initialStability = 1.0; // 1.0 for perfect stability, lower for collapse, higher for explosion
-			double escapeVel = - std::sqrt(initialStability * currAccelT.length() * (currPosT - center).length());
-			Vector3d newVelT = rot * currAccelT.normal() * escapeVel;
+			pf_Vector3 currAccelT(convert_to_my_vec3(_acceleration[idx]));
+			pf_Vector3 currPosT(convert_to_my_vec3(_position[idx]));
+			pf_real initialStability = 1.0; // 1.0 for perfect stability, lower for collapse, higher for explosion
+			pf_real escapeVel = - std::sqrt(initialStability * currAccelT.length() * (currPosT - center).length());
+			pf_Vector3 newVelT = rot * currAccelT.normal() * escapeVel;
 			_velocity[idx] = convert_my_vec3(newVelT + velocity);
 		}
 #if defined(USE_OPENCL)
@@ -233,24 +239,28 @@ void GalaxySim::initialize_bodies(const math::Vector3d& center, const math::Vect
 	_currBodyOffset += bodies;
 }
 
-void GalaxySim::iterate( double t )
+void GalaxySim::iterate( pf_real t )
 {
 	iterate_gravity();
 	iterate_move(t);
 	output_image();
 	output_data();
 
-	std::cout << "Iteration " << _iteration << std::endl;
+	std::cout << "Iteration " << _iteration << ",  bh time = " << _lastBHTreeCalcTime << "ms, grav time = " << _lastCalcGravityTime << "ms, move time = " << _lastCalcMoveTime << "ms" << std::endl;
 	++ _iteration;
 }
 
 void GalaxySim::iterate_gravity()
 {
+	_timer.reset();
 	bhTree.build(_position.get_data(), _mass.get_data(), currBounds.min(), currBounds.max());
+	_lastBHTreeCalcTime = _timer.get_time();
+
+	_timer.reset();
 #if defined(USE_OPENCL)
 	bhTree.enqueue_write(*activeDevice);
 	bhTree.bind_as_parameters(gravityProgram, GRAVITY_KERNEL, 4);
-	gravityProgram.enqueue_work(*activeDevice, GRAVITY_KERNEL, _bodyCount);
+	gravityProgram.enqueue_work(*activeDevice, GRAVITY_KERNEL, _bodyCount, WORKGROUP_SIZE);
 	gravityProgram.wait_all();
 #else
 	for(size_t idx = 0; idx < _bodyCount; ++idx)
@@ -261,13 +271,15 @@ void GalaxySim::iterate_gravity()
 			&bhTree.nodes_ppp.get_data()[0]);
 	}
 #endif
+	_lastCalcGravityTime = _timer.get_time();
 }
 
-void GalaxySim::iterate_move( double t )
+void GalaxySim::iterate_move( pf_real t )
 {
+	_timer.reset();
 #if defined(USE_OPENCL)
-	moveProgram.bind_parameter(MOVE_KERNEL, 0, (cl_double)t);
-	moveProgram.enqueue_work(*activeDevice, MOVE_KERNEL, _bodyCount);
+	moveProgram.bind_parameter(MOVE_KERNEL, 0, (cl_real)t);
+	moveProgram.enqueue_work(*activeDevice, MOVE_KERNEL, _bodyCount, WORKGROUP_SIZE);
 	_position.enqueue_read(*activeDevice, true);
 #else
 	for(size_t idx = 0; idx < _bodyCount; ++idx)
@@ -276,27 +288,16 @@ void GalaxySim::iterate_move( double t )
 			&_acceleration.get_data()[0]);
 	}
 #endif
+	_lastCalcMoveTime = _timer.get_time();
 }
 
 void GalaxySim::output_image()
 {
-	//QImage output(IMAGE_WIDTH, IMAGE_HEIGHT, QImage::Format_RGB888);
 	const OpenCLBufferD3::vector_type& positionVals = _position.get_data();
-	//output.fill(Qt::black);
-
 	currBounds.reset();
-	math::Vector3d avPos;
 	for(size_t idx = 0; idx < positionVals.size(); ++idx)
 	{
-		//int x = (positionVals[idx].s[0] - xOffset) * xScale;
-		//int y = (positionVals[idx].s[1] - yOffset) * yScale;
-		//unsigned char c = (_mass[idx] - massOffset) * massScale;
-		//if(x >= 0 && x < IMAGE_WIDTH && y >= 0 && y < IMAGE_HEIGHT)
-		//{
-		//	output.setPixel(x, y, (c << 16) + (c << 8) + c);
-		//}
 		currBounds.expand(convert_to_my_vec3(positionVals[idx]));
-		avPos += convert_to_my_vec3(positionVals[idx]) / (double)_bodyCount;
 	}
 
 	emit new_data_available();
@@ -309,7 +310,7 @@ void GalaxySim::output_data()
 	const OpenCLBufferD3::vector_type& positionVals = _position.get_data();
 	for(size_t idx = 0; idx < positionVals.size(); ++idx)
 	{
-		_data.push_back(math::Vector3d(positionVals[idx].s[0], positionVals[idx].s[1], positionVals[idx].s[2]));
+		_data.push_back(pf_Vector3(positionVals[idx].s[0], positionVals[idx].s[1], positionVals[idx].s[2]));
 	}
 }
 
@@ -318,7 +319,7 @@ void GalaxySim::lock_data() const
 	_dataMutex.lock();
 }
 
-const std::vector< math::Vector3d >& GalaxySim::get_data() const
+const std::vector< pf_Vector3 >& GalaxySim::get_data() const
 {
 	return _data;
 }

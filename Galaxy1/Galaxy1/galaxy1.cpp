@@ -16,9 +16,9 @@ using namespace opencl;
 //#define UNIVERSE_SIM
 
 #if defined(UNIVERSE_SIM)
-#	define ITERATION_DURATION 1
+#	define ITERATION_DURATION 0.0005
 #else
-#	define ITERATION_DURATION 5000
+#	define ITERATION_DURATION 500
 #endif
 
 #define IMAGE_WIDTH		1024
@@ -64,17 +64,16 @@ void Galaxy1::newGalaxyAddButton_clicked(bool)
 #if defined(UNIVERSE_SIM)
 	sim.initialize_universe(0.1 * SOLAR_MASS_IN_EARTH_MASS, 10 * SOLAR_MASS_IN_EARTH_MASS, 5000 * AU_PER_LIGHTYEAR, 50000000);
 #else
-	sim.initialize_galaxy(math::Vector3d(
-		ui.newGalaxyXPositionSpinBox->value() * AU_PER_LIGHTYEAR, 
-		ui.newGalaxyYPositionSpinBox->value() * AU_PER_LIGHTYEAR, 
-		ui.newGalaxyZPositionSpinBox->value() * AU_PER_LIGHTYEAR),
-		math::Vector3d(
-		ui.newGalaxyXVelocitySpinBox->value() * AU_PER_LIGHTYEAR, 
-		ui.newGalaxyYVelocitySpinBox->value() * AU_PER_LIGHTYEAR, 
-		ui.newGalaxyZVelocitySpinBox->value() * AU_PER_LIGHTYEAR), 
+	sim.initialize_galaxy(pf_Vector3(
+		ui.newGalaxyXPositionSpinBox->value(), 
+		ui.newGalaxyYPositionSpinBox->value(), 
+		ui.newGalaxyZPositionSpinBox->value()),
+		pf_Vector3(
+		ui.newGalaxyXVelocitySpinBox->value(), 
+		ui.newGalaxyYVelocitySpinBox->value(), 
+		ui.newGalaxyZVelocitySpinBox->value()), 
 		ui.newGalaxyBodyCountSpinBox->value() * 1000, 
-		0.1 * SOLAR_MASS_IN_EARTH_MASS, 10 * SOLAR_MASS_IN_EARTH_MASS, 
-		ui.newGalaxySizeSpinBox->value() * AU_PER_LIGHTYEAR);
+		0.1, 10, ui.newGalaxySizeSpinBox->value());
 #endif
 }
 
@@ -85,16 +84,18 @@ void Galaxy1::resetButton_clicked(bool)
 
 void Galaxy1::new_data_available()
 {
-	QImage output = ui.glWidget->grabFrameBuffer().
-		scaled(IMAGE_WIDTH, IMAGE_HEIGHT, Qt::KeepAspectRatio).
-		convertToFormat(QImage::Format_RGB888);
-	if(_video.isOpened())
-	{
-		cv::Mat img(IMAGE_WIDTH, IMAGE_HEIGHT, CV_8UC3);
-		assert(output.byteCount() == img.total() * img.elemSize());
-		memcpy_s(img.ptr(), img.total() * img.elemSize(), output.bits(), output.byteCount());
-		_video << img;
-	}
+	//QImage output = ui.glWidget->grabFrameBuffer().
+	//	scaled(IMAGE_WIDTH, IMAGE_HEIGHT, Qt::KeepAspectRatio).
+	//	convertToFormat(QImage::Format_RGB888);
+	//if(_video.isOpened())
+	//{
+	//	cv::Mat img(IMAGE_WIDTH, IMAGE_HEIGHT, CV_8UC3);
+	//	size_t outputSize = output.byteCount();
+	//	size_t imgSize = img.total() * img.elemSize();
+	//	//assert(outputSize == imgSize);
+	//	memcpy_s(img.ptr(), imgSize, output.bits(), outputSize);
+	//	_video << img;
+	//}
 }
 
 Galaxy1::Galaxy1(QWidget *parent, Qt::WFlags flags)
@@ -109,7 +110,6 @@ Galaxy1::Galaxy1(QWidget *parent, Qt::WFlags flags)
 	if(!sim.init())
 	{
 		std::cout << "Could not initialize sim!" << std::endl;
-		return ;
 	}
 
 	init_writing("../Data/Results/output.avi");
