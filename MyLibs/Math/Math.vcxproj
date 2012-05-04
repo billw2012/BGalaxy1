@@ -57,6 +57,7 @@
     <ClInclude Include="boundingsphere.hpp" />
     <ClInclude Include="constants.hpp" />
     <ClInclude Include="frustum.hpp" />
+    <ClInclude Include="hermite.hpp" />
     <ClInclude Include="highprec.h" />
     <ClInclude Include="intersection.hpp" />
     <ClInclude Include="matrix3.hpp" />

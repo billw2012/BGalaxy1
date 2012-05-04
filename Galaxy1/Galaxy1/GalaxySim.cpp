@@ -162,7 +162,7 @@ void GalaxySim::initialize_bodies(const pf_Vector3& center, const pf_Vector3& ve
 
 	resize(_currBodyOffset + bodies);
 
-	bhTheta = 3.0;
+	bhTheta = 0.5;
 
 #if defined(USE_OPENCL)
 	gravityProgram.bind_parameter(GRAVITY_KERNEL, 0, (cl_real)bhTheta);
@@ -299,8 +299,6 @@ void GalaxySim::output_image()
 	{
 		currBounds.expand(convert_to_my_vec3(positionVals[idx]));
 	}
-
-	emit new_data_available();
 }
 
 void GalaxySim::output_data()
@@ -312,6 +310,7 @@ void GalaxySim::output_data()
 	{
 		_data.push_back(pf_Vector3(positionVals[idx].s[0], positionVals[idx].s[1], positionVals[idx].s[2]));
 	}
+	emit new_data_available();
 }
 
 void GalaxySim::lock_data() const

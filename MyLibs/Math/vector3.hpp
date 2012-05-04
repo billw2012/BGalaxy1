@@ -3,6 +3,7 @@
 
 #include <limits>
 #include <cmath>
+#include <iostream>
 
 #include "Misc/libdesc.hpp"
 #include "Misc/hash.hpp"

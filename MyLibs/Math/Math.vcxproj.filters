@@ -81,6 +81,9 @@
     <ClInclude Include="vector4.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="hermite.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="atmospheric.inl">

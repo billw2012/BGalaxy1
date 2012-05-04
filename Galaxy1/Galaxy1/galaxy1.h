@@ -14,6 +14,8 @@
 
 #include "Utils/WaitHandle.h"
 
+#include "GalaxySerializer.h"
+
 class Galaxy1 : public QMainWindow
 {
 	Q_OBJECT
@@ -30,21 +32,35 @@ private slots:
 	void newGalaxyAddButton_clicked(bool);
 	void resetButton_clicked(bool);
 
+	void playbackModeButton_clicked(bool);
+
+	void update_playback_slider();
+
+	void playbackSlider_sliderMoved(int);
+
 	void draw_frame() const;
+
+	void loadButton_clicked(bool);
+	void saveButton_clicked(bool);
+
+	void recordButton_clicked(bool);
 
 private:
 	void init_writing(const std::string& outputFile);
+	void set_frame(float f);
 
 private:
 	Ui::Galaxy1Class ui;
 	QDebugStream* debugStream;
 	QTimer* _idleTimer;
 	boost::thread executeThread;
-	GalaxySim sim;
+	GalaxySim _sim;
+	GalaxySerializer _serializer;
 	//QGraphicsScene* scene;
 	//QGraphicsPixmapItem* lastImageItem;
 	WaitHandle _terminateSim;
 	cv::VideoWriter _video;
+	bool _record;
 };
 
 #endif // GALAXY1_H

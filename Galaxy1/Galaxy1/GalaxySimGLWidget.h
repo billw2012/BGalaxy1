@@ -2,11 +2,13 @@
 #define GalaxySimGLWidget_h__
 
 #include <QtOpenGL/QGLWidget>
-#include <gl/GLU.h>
+
 #include <QWheelEvent>
 #include <QMouseEvent>
 
 #include "GalaxySim.h"
+
+#include "GalaxyGizmo.h"
 
 #include "Math/matrix4.hpp"
 #include "Math/transformation.hpp"
@@ -37,13 +39,27 @@ class GalaxySimGLWidget : public QGLWidget
 	Q_OBJECT        // must include this if you use Qt signals/slots
 
 public:
+	std::vector<math::Vector3f> _testH;
+
 	GalaxySimGLWidget(QWidget *parent)
-		: QGLWidget(parent) 
+		: QGLWidget(parent),
+		_playbackMode(false)
 	{
 		setAutoBufferSwap(true);
+		setMouseTracking(true);
 	}
 
 	void set_sim(GalaxySim* sim) { _sim = sim; }
+
+	void set_points(const std::vector< pf_Vector3 >& data)
+	{
+		_currentData = data;
+	}
+
+	void set_playback_mode(bool playbackMode)
+	{
+		_playbackMode = playbackMode;
+	}
 
 protected:
 
@@ -76,31 +92,40 @@ protected:
 		//glDisable(GL_LIGHTING);
 		//glEnable(GL_DEPTH_TEST);
 		glBegin(GL_POINTS);
-		_sim->lock_data();
-		glColor3f(1.0f, 1.0f, 1.0f);
-		const std::vector< pf_Vector3 >& currData = _sim->get_data();
-		for(size_t idx = 0; idx < currData.size(); ++idx)
 		{
-			glVertex3d(currData[idx].x, currData[idx].y, currData[idx].z);
+			const std::vector< pf_Vector3 >* pData;
+			if(_playbackMode)
+				pData = &_currentData;
+			else
+			{
+				_sim->lock_data();
+				pData = &_sim->get_data();
+			}
+			glColor3f(1.0f, 1.0f, 1.0f);
+			
+			for(size_t idx = 0; idx < pData->size(); ++idx)
+			{
+				glVertex3d((*pData)[idx].x, (*pData)[idx].y, (*pData)[idx].z);
+			}
+			if(!_playbackMode)
+				_sim->unlock_data();
 		}
-		_sim->unlock_data();
 		glEnd();
-	}
-
-	math::Vector3f project_pt(const math::Vector3f& screenPos)
-	{
-		GLdouble modelViewMatrix[16], projectionMatrix[16];
-		GLint viewport[4];
-		glGetDoublev(GL_MODELVIEW_MATRIX, modelViewMatrix);
-		glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
-		glGetIntegerv(GL_VIEWPORT, viewport);
-		double px, py, pz;
-		gluUnProject(screenPos.x, screenPos.y, screenPos.z, modelViewMatrix, projectionMatrix, viewport, &px, &py, &pz);
-		return math::Vector3f(px, py, pz);
+		//glBegin(GL_LINE_STRIP);
+		//{
+		//	for(size_t idx = 0; idx < _testH.size(); ++idx)
+		//	{
+		//		glVertex3f(_testH[idx].x, _testH[idx].y, _testH[idx].z);
+		//	}
+		//}
+		//glEnd();
+		_gizmo.draw();
 	}
 
 	virtual void mouseMoveEvent ( QMouseEvent * event )
 	{
+		if(_gizmo.mouseMoveEvent(event->x(), height() - event->y(), event->buttons()))
+			return ;
 		using namespace math;
 		QPointF pDiff = event->posF() - _lastMousePt;
 		if(event->buttons() == Qt::LeftButton)
@@ -127,6 +152,15 @@ protected:
 
 	virtual void mousePressEvent ( QMouseEvent * event )
 	{
+		if(_gizmo.mousePressEvent(event->x(), height() - event->y(), event->buttons()))
+			return ;
+		_lastMousePt = event->posF();
+	}
+
+	virtual void mouseReleaseEvent ( QMouseEvent * event )
+	{
+		if(_gizmo.mouseReleaseEvent(event->x(), height() - event->y(), event->buttons()))
+			return ;
 		_lastMousePt = event->posF();
 	}
 
@@ -134,10 +168,14 @@ protected:
 	{
 		_cameraMat.distance = std::max<float>(100.0f, _cameraMat.distance + (float)event->delta() * (_cameraMat.distance / 1000.0f));
 	}
+
 private:
 	GalaxySim* _sim;
 	OpenGLCamera _cameraMat;
 	QPointF _lastMousePt;
+	GalaxyGizmo _gizmo;
+	std::vector< pf_Vector3 > _currentData;
+	bool _playbackMode;
 };
 
 #endif // GalaxySimGLWidget_h__
