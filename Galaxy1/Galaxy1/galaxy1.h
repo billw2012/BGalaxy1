@@ -1,7 +1,7 @@
 #ifndef GALAXY1_H
 #define GALAXY1_H
 
-#include <QtGui/QMainWindow>
+#include <QtWidgets/QMainWindow>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
 #include <QTimer>
@@ -16,12 +16,14 @@
 
 #include "GalaxySerializer.h"
 
+#include <opencv2/videoio.hpp>
+
 class Galaxy1 : public QMainWindow
 {
 	Q_OBJECT
 
 public:
-	Galaxy1(QWidget *parent = 0, Qt::WFlags flags = 0);
+	Galaxy1(QWidget *parent = 0, Qt::WindowFlags flags = Qt::WindowFlags());
 	~Galaxy1();
 
 private slots:

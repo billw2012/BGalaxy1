@@ -50,7 +50,7 @@ void ProcessQueue::run_processes_thread()
 
 void ProcessQueue::process_output_callback(const ProcessCommand& cmd, const char* buff, size_t count)
 {
-	emit process_output(QString::fromAscii(buff, count));
+	emit process_output(QString::fromLatin1(buff, count));
 }
 
 void ProcessQueue::run_command( const ProcessCommand& cmd )
@@ -58,7 +58,7 @@ void ProcessQueue::run_command( const ProcessCommand& cmd )
 	emit process_output(QString("\n-------------------------------------------"
 		"\n-------------------------------------------"
 		"\n-------------------------------------------\nExecuting: ") + cmd.commandLine + QString("\n\n"));
-	run_redirected_process(cmd.commandLine.toAscii().data(), boost::bind(&ProcessQueue::process_output_callback, this, boost::ref(cmd), _1, _2));
+	run_redirected_process(cmd.commandLine.toLatin1().data(), boost::bind(&ProcessQueue::process_output_callback, this, boost::ref(cmd), _1, _2));
 }
 
 }

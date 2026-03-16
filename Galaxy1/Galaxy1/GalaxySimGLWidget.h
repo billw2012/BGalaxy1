@@ -124,10 +124,11 @@ protected:
 
 	virtual void mouseMoveEvent ( QMouseEvent * event )
 	{
-		if(_gizmo.mouseMoveEvent(event->x(), height() - event->y(), event->buttons()))
+		const qreal dpr = devicePixelRatioF();
+		if(_gizmo.mouseMoveEvent((int)(event->x() * dpr), (int)((height() - event->y()) * dpr), event->buttons()))
 			return ;
 		using namespace math;
-		QPointF pDiff = event->posF() - _lastMousePt;
+		QPointF pDiff = event->localPos() - _lastMousePt;
 		if(event->buttons() == Qt::LeftButton)
 		{
 			float newAlt = _cameraMat.alt + pDiff.y() * 0.5f;
@@ -137,31 +138,33 @@ protected:
 		}
 		else if(event->buttons() == Qt::RightButton)
 		{
-			Vector3f plast0 = project_pt(Vector3f(event->posF().x(), _lastMousePt.y(), 0.0));
-			Vector3f plast1 = project_pt(Vector3f(event->posF().x(), _lastMousePt.y(), 1.0));
-			Vector3f pcurr0 = project_pt(Vector3f(_lastMousePt.x(),  event->posF().y(),  0.0));
-			Vector3f pcurr1 = project_pt(Vector3f(_lastMousePt.x(),  event->posF().y(),  1.0));
+			Vector3f plast0 = project_pt(Vector3f(event->localPos().x(), _lastMousePt.y(), 0.0));
+			Vector3f plast1 = project_pt(Vector3f(event->localPos().x(), _lastMousePt.y(), 1.0));
+			Vector3f pcurr0 = project_pt(Vector3f(_lastMousePt.x(),  event->localPos().y(),  0.0));
+			Vector3f pcurr1 = project_pt(Vector3f(_lastMousePt.x(),  event->localPos().y(),  1.0));
 			Vector3f cameraPos(_cameraMat.get_matrix() * Vector4f::WAxis);
 			Planef cameraPlane((cameraPos - _cameraMat.center).normal(), _cameraMat.center);
 			IntersectionPairf isectlast = intersects(math::Rayf(plast0, plast1), cameraPlane);
 			IntersectionPairf isectcurr = intersects(math::Rayf(pcurr0, pcurr1), cameraPlane);
 			_cameraMat.center += (isectcurr.point - isectlast.point);
 		}
-		_lastMousePt = event->posF();
+		_lastMousePt = event->localPos();
 	}
 
 	virtual void mousePressEvent ( QMouseEvent * event )
 	{
-		if(_gizmo.mousePressEvent(event->x(), height() - event->y(), event->buttons()))
+		const qreal dpr = devicePixelRatioF();
+		if(_gizmo.mousePressEvent((int)(event->x() * dpr), (int)((height() - event->y()) * dpr), event->buttons()))
 			return ;
-		_lastMousePt = event->posF();
+		_lastMousePt = event->localPos();
 	}
 
 	virtual void mouseReleaseEvent ( QMouseEvent * event )
 	{
-		if(_gizmo.mouseReleaseEvent(event->x(), height() - event->y(), event->buttons()))
+		const qreal dpr = devicePixelRatioF();
+		if(_gizmo.mouseReleaseEvent((int)(event->x() * dpr), (int)((height() - event->y()) * dpr), event->buttons()))
 			return ;
-		_lastMousePt = event->posF();
+		_lastMousePt = event->localPos();
 	}
 
 	virtual void wheelEvent ( QWheelEvent * event )

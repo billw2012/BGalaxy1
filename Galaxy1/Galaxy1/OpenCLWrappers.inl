@@ -159,19 +159,7 @@ cl_mem_flags OpenCLBuffer<ValTy_>::interpret_flags(typename Flags::type flags)
 
 }
 
-#if defined(CL_VERSION_1_2)
-template < class ValTy_ > 
-bool CLProgram::bind_parameter<ValTy_>(const std::string& kernelFnName, const std::string& paramName, const ValTy_& val)
-{
-
-}
-
-template < class ValTy_ > 
-bool CLProgram::bind_parameter<ValTy_>(const std::string& kernelFnName, const OpenCLBuffer<ValTy_>& buffer)
-{
-
-}
-#endif
+// Removed: invalid out-of-class explicit template specialization syntax (C2768)
 
 template < class ValTy_ > 
 bool CLProgram::bind_parameter(const std::string& kernelFnName, cl_uint paramIdx, const ValTy_& val)
@@ -180,6 +168,10 @@ bool CLProgram::bind_parameter(const std::string& kernelFnName, cl_uint paramIdx
 	if(fItr == _kernals.end())
 		return false;
 	_lastError = ::clSetKernelArg(fItr->second.kernel, paramIdx, sizeof(ValTy_), &val);
+	if (_lastError != CL_SUCCESS)
+	{
+		std::cout << "::clSetKernelArg error " << _lastError << std::endl;
+	}
 	return _lastError == CL_SUCCESS;
 }
 

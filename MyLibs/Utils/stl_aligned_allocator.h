@@ -16,7 +16,7 @@ public:
 	template <class U>
 	struct rebind
 	{
-		typedef aligned_allocator<U> other;
+		typedef aligned_allocator<U, Alignment> other;
 	};
 
 	pointer address (reference value) const 

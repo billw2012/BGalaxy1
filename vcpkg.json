@@ -1,0 +1,10 @@
+{
+  "name": "bgalaxy1",
+  "version": "1.0.0",
+  "dependencies": [
+    "opencv4",
+    "boost-thread",
+    "boost-random",
+    "dlib"
+  ]
+}

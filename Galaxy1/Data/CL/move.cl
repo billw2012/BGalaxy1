@@ -1,5 +1,5 @@
 #ifdef GALAXY_DOUBLE_PRECISION
-#pragma OPENCL EXTENSION cl_amd_fp64 : enable
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #define REAL  double
 #define REAL2 double2
 #define REAL3 double3

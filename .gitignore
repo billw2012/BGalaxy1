@@ -1,0 +1,25 @@
+# CMake build directories
+build/
+build-release/
+
+# vcpkg installed packages (restored by cmake configure)
+vcpkg_installed/
+
+# Rider / IntelliJ
+.idea/
+
+# Visual Studio
+*.user
+*.suo
+.vs/
+
+# Simulation output
+**/Results/
+
+# Legacy VS2010 in-source build artifacts (MyLibs)
+**/Debug/
+**/Release/
+**/x64/
+**/x86/
+**/Win32/
+**/GeneratedFiles/

@@ -8,9 +8,9 @@
 
 using namespace opencl;
 
-#define GRAVITY_PROGRAM	"../Data/CL/gravity.cl"
+#define GRAVITY_PROGRAM	"Data/CL/gravity.cl"
 #define GRAVITY_KERNEL	"gravity"
-#define MOVE_PROGRAM	"../Data/CL/move.cl"
+#define MOVE_PROGRAM	"Data/CL/move.cl"
 #define MOVE_KERNEL		"move"
 
 #define DEFAULT_DEVICE_INDEX 0
@@ -31,13 +31,23 @@ GalaxySim::GalaxySim()
 
 }
 
+static std::string exe_relative_path(const std::string& relPath)
+{
+	char buf[MAX_PATH];
+	GetModuleFileNameA(nullptr, buf, MAX_PATH);
+	std::string exeDir(buf);
+	exeDir = exeDir.substr(0, exeDir.find_last_of("\\/") + 1);
+	return exeDir + relPath;
+}
+
 bool GalaxySim::load_kernel( CLProgram& program, const std::string& file, const std::string& kernel )
 {
 	CLProgram::ProgramOptions options;
+	const std::string resolvedFile = exe_relative_path(file);
 #if defined(GALAXY_DOUBLE_PRECISION)
 	options.add_macro("GALAXY_DOUBLE_PRECISION");
 #endif
-	bool buildSuccess = program.create(file, 
+	bool buildSuccess = program.create(resolvedFile,
 #if defined(KERNEL_DEBUGGING)
 		options.debugging(), *activeDevice
 #else
@@ -46,11 +56,11 @@ bool GalaxySim::load_kernel( CLProgram& program, const std::string& file, const 
 		);
 
 #if defined(KERNEL_DEBUGGING)
-	std::cout << file << " build log for device " << *activeDevice.name << std::endl <<
+	std::cout << resolvedFile << " build log for device " << *activeDevice.name << std::endl <<
 		program.get_build_log(*activeDevice) << std::endl;
 #else
 	std::for_each(devices.begin(), devices.end(), [&](const CLDevice& device) {
-		std::cout << file << " build log for device " << device.name << std::endl <<
+		std::cout << resolvedFile << " build log for device " << device.name << std::endl <<
 			program.get_build_log(device) << std::endl;
 	});
 #endif
@@ -93,11 +103,11 @@ bool GalaxySim::resize( size_t bodyCount )
 	moveProgram.bind_parameter(MOVE_KERNEL, 1, _position);
 	moveProgram.bind_parameter(MOVE_KERNEL, 2, _velocity);
 	moveProgram.bind_parameter(MOVE_KERNEL, 3, _acceleration);
-	moveProgram.bind_parameter(MOVE_KERNEL, 4, bodyCount);
+	moveProgram.bind_parameter(MOVE_KERNEL, 4, (cl_int)bodyCount);
 	gravityProgram.bind_parameter(GRAVITY_KERNEL, 1, _position);
 	gravityProgram.bind_parameter(GRAVITY_KERNEL, 2, _mass);
 	gravityProgram.bind_parameter(GRAVITY_KERNEL, 3, _acceleration);
-	gravityProgram.bind_parameter(GRAVITY_KERNEL, 9, bodyCount);
+	gravityProgram.bind_parameter(GRAVITY_KERNEL, 9, (cl_uint)bodyCount);
 #endif
 
 	return true;
@@ -256,6 +266,7 @@ void GalaxySim::iterate_gravity()
 	bhTree.build(_position.get_data(), _mass.get_data(), currBounds.min(), currBounds.max());
 	_lastBHTreeCalcTime = _timer.get_time();
 
+	
 	_timer.reset();
 #if defined(USE_OPENCL)
 	bhTree.enqueue_write(*activeDevice);

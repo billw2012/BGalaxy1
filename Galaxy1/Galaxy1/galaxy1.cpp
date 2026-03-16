@@ -26,7 +26,7 @@ using namespace opencl;
 #define IMAGE_WIDTH		1024
 #define IMAGE_HEIGHT	1024
 
-Galaxy1::Galaxy1(QWidget *parent, Qt::WFlags flags)
+Galaxy1::Galaxy1(QWidget *parent, Qt::WindowFlags flags)
 	: QMainWindow(parent, flags),
 	_terminateSim(FALSE),
 	_record(false)
@@ -183,7 +183,7 @@ void Galaxy1::loadButton_clicked(bool)
 	QString	fileName = QFileDialog::getOpenFileName( this, "Load Simulation", QString(), QString("Sim Files (*.gxy)"));
 	if(!fileName.isEmpty())
 	{
-		if(!_serializer.load(fileName.toAscii().data()))
+		if(!_serializer.load(fileName.toStdString()))
 		{
 			QMessageBox::critical(this, "Load Error!", "Could not load specified file!");
 		}
@@ -196,7 +196,7 @@ void Galaxy1::saveButton_clicked(bool)
 	QString	fileName = QFileDialog::getSaveFileName(this, "Save Simulation", QString(), QString("Sim Files (*.gxy)"));
 	if(!fileName.isEmpty())
 	{
-		if(!_serializer.save(fileName.toAscii().data()))
+		if(!_serializer.save(fileName.toStdString()))
 		{
 			QMessageBox::critical(this, "Save Error!", "Could not save to specified file!");
 		}
@@ -218,7 +218,7 @@ Galaxy1::~Galaxy1()
 void Galaxy1::init_writing( const std::string& outputFile )
 {
 	// CV_FOURCC('x','v','i','d')
-	_video.open(outputFile, CV_FOURCC('m','p','e','g'), 30.0, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
+	_video.open(outputFile, cv::VideoWriter::fourcc('m','p','e','g'), 30.0, cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT));
 }
 
 void Galaxy1::set_frame(float f)

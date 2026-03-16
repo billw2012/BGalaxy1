@@ -57,8 +57,8 @@ CLDevice::CLDevice(cl_device_id device_, cl_context context_, cl_command_queue q
 	: device(device_), context(context_), queue(queue_)
 {
 	//queue				= create_command_queue()
-	available			= get_device_info<bool>(device,					CL_DEVICE_AVAILABLE);
-	compilerAvailable	= get_device_info<bool>(device,					CL_DEVICE_COMPILER_AVAILABLE);
+	available			= get_device_info<cl_bool>(device,				CL_DEVICE_AVAILABLE);
+	compilerAvailable	= get_device_info<cl_bool>(device,				CL_DEVICE_COMPILER_AVAILABLE);
 	memCacheSize		= get_device_info<cl_ulong>(device,				CL_DEVICE_GLOBAL_MEM_CACHE_SIZE);
 	memSize				= get_device_info<cl_ulong>(device,				CL_DEVICE_GLOBAL_MEM_SIZE);
 	clockFrequency		= get_device_info<cl_uint>(device,				CL_DEVICE_MAX_CLOCK_FREQUENCY);
@@ -230,6 +230,7 @@ std::string CLProgram::get_build_log(const CLDevice& device) const
 	if(_lastError != CL_SUCCESS)
 	{
 		std::cout << "::clGetProgramBuildInfo error." << std::endl;
+		return std::string("::clGetProgramBuildInfo error, couldn't retrieve build log");
 	}
 	if(strSize == 0)
 		return std::string();
@@ -344,6 +345,8 @@ void CLProgram::wait_all()
 			events.push_back(execution->event);
 		});
 		::clWaitForEvents(events.size(), &events[0]);
+		for(cl_event ev : events)
+			::clReleaseEvent(ev);
 		_executions.clear();
 	}
 }
@@ -389,6 +392,8 @@ void CLEventSet::wait_all()
 	if(!_activeCommands.empty())
 	{
 		::clWaitForEvents(_activeCommands.size(), &_activeCommands[0]);
+		for(cl_event ev : _activeCommands)
+			::clReleaseEvent(ev);
 		_activeCommands.clear();
 	}
 }

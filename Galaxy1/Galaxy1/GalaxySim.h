@@ -5,7 +5,7 @@
 #include <QImage>
 #include <QList>
 #include <QVector3D>
-#include "opencv2/highgui/highgui.hpp"
+#include <opencv2/videoio.hpp>
 #include "boost/thread/mutex.hpp"
 #include "Utils/HRTimer.h"
 

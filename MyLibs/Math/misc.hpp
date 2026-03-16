@@ -38,18 +38,10 @@ Ty_ clamp(const Ty_& val, const Ty_& minVal, const Ty_& maxVal)
 	return std::min(maxVal, std::max(minVal, val));
 }
 
-// fast floor function
+// fast floor function (x87 asm replaced for x64 compatibility)
 inline int lrfloorf(float flt)
 {
-	int i;
-
-	flt -= 0.5f;
-	__asm
-	{
-		fld flt
-			fistp i
-	};
-	return(i);
+	return static_cast<int>(std::floor(flt));
 }
 
 // not fast floor function!
