@@ -1,0 +1,3 @@
+[submodule "LegacyMyLibs"]
+	path = LegacyMyLibs
+	url = https://github.com/billw2012/LegacyMyLibs.git
